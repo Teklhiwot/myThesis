@@ -8,23 +8,23 @@ The project architecture comprises five modules: Ethereum components (smart cont
 
 ## 6.2 Smart Contract Architecture
 
-The prototype implements two smart contracts within a single Solidity source file. The first contract, Report, encapsulates individual surveillance report instances with parameters for the creator address and report details. The second contract, ReportFactory, implements the factory pattern—it deploys and manages all Report contract instances on the network. This separation ensures that the factory contract retains an unmodified copy of the Report source code, preventing post-deployment tampering. The factory maintains a registry of all deployed report addresses, providing a complete index of surveillance records (Figure 4.1).
+The prototype implements two smart contracts within a single Solidity source file. The first contract, Report, encapsulates individual surveillance report instances with parameters for the creator address and report details. The second contract, ReportFactory, implements the factory pattern—it deploys and manages all Report contract instances on the network. This separation ensures that the factory contract retains an unmodified copy of the Report source code, preventing post-deployment tampering. The factory maintains a registry of all deployed report addresses, providing a complete index of surveillance records (Figure 14).
 
-Deployment follows a one-time pattern: the ReportFactory is deployed once to the Rinkeby network, and subsequently creates new Report instances on demand. A Web3 instance connected through the Infura API provider handles all deployment transactions (Figures 4.2, 4.3).
+Deployment follows a one-time pattern: the ReportFactory is deployed once to the Rinkeby network, and subsequently creates new Report instances on demand. A Web3 instance connected through the Infura API provider handles all deployment transactions (Figures 15, 16).
 
 ## 6.3 Functional Operations
 
 The prototype supports seven core operations that implement the model described in Section 5:
 
-**Case report creation.** A case reporter initiates a transaction through MetaMask to the ReportFactory contract, which deploys a new Report instance with a unique blockchain address. The factory records and indexes all deployed report addresses (Figures 4.4–4.6).
+**Case report creation.** A case reporter initiates a transaction through MetaMask to the ReportFactory contract, which deploys a new Report instance with a unique blockchain address. The factory records and indexes all deployed report addresses (Figures 17–19).
 
-**Report listing and detail display.** The application queries the deployed ReportFactory instance via Web3 to retrieve all registered report addresses, then renders the list through the React front-end. Individual report details are retrieved through a contract function that returns the summary of each recorded report (Figures 4.7, 4.8).
+**Report listing and detail display.** The application queries the deployed ReportFactory instance via Web3 to retrieve all registered report addresses, then renders the list through the React front-end. Individual report details are retrieved through a contract function that returns the summary of each recorded report (Figures 20, 21).
 
-**Report review and feedback.** Supervisory-level users mark reports as read, which updates the read count and unlocks rework request capabilities. When a report requires correction, supervisors submit rework requests with descriptive annotations, creating an immutable feedback record on the blockchain (Figures 4.9, 4.10).
+**Report review and feedback.** Supervisory-level users mark reports as read, which updates the read count and unlocks rework request capabilities. When a report requires correction, supervisors submit rework requests with descriptive annotations, creating an immutable feedback record on the blockchain (Figures 22, 23).
 
-**Surveillance data analysis.** The analysis module presents reported case data across three dimensions: temporal (weekly aggregation), spatial (location-based distribution), and demographic (age and gender attributes), implementing the epidemiological analysis framework defined in Section 5.4 (Figure 4.11).
+**Surveillance data analysis.** The analysis module presents reported case data across three dimensions: temporal (weekly aggregation), spatial (location-based distribution), and demographic (age and gender attributes), implementing the epidemiological analysis framework defined in Section 5.4 (Figure 24).
 
-**Laboratory result reporting.** Laboratory technicians record pathogen identification results through a dedicated form interface, with submissions deployed as blockchain transactions. All recorded laboratory reports are retrievable and displayed in list format (Figure 4.12).
+**Laboratory result reporting.** Laboratory technicians record pathogen identification results through a dedicated form interface, with submissions deployed as blockchain transactions. All recorded laboratory reports are retrievable and displayed in list format (Figure 25).
 
 ## 6.4 Deployment Configuration
 

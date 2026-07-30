@@ -22,7 +22,9 @@ The authors thank the staff of the Amhara Public Health Institute for their part
 
 ## Financial Disclosure / Funding Statement
 
-> **[AUTHOR ACTION REQUIRED]:** Provide a complete funding statement. If this research was supported by a grant or institutional funding, state: "This work was supported by [Funder Name] [Grant Number]." If no external funding was received, state: "This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors."
+This research was conducted as part of a Master of Science thesis at Bahir Dar University, Bahir Dar Institute of Technology, Faculty of Computing. No specific external grant from any funding agency in the public, commercial, or not-for-profit sectors was received for this research.
+
+> **[AUTHOR ACTION REQUIRED]:** Confirm this statement is accurate. If any funding (scholarship, institutional support, or grant) was received, replace with: "This work was supported by [Funder Name] [Grant Number]."
 
 ---
 
@@ -44,14 +46,32 @@ The smart contract source code for the prototype is available in the repository 
 
 ## Ethics Statement
 
-This study involved a usability evaluation with 26 human participants (13 field epidemiologists, 7 public health workers, and 6 laboratory technicians) recruited from the Amhara Public Health Institute. Participants interacted with the prototype system for 15–20 minutes and completed the standardized Software Usability Measurement Inventory (SUMI) questionnaire. The study posed no more than minimal risk to participants. Participation was voluntary, and participants received a briefing on the research objectives prior to engagement.
+This study involved a usability evaluation with 26 human participants (13 field epidemiologists, 7 public health workers, and 6 laboratory technicians) recruited from the Amhara Public Health Institute, Bahir Dar, Ethiopia. Participants were briefed on the research objectives and provided voluntary agreement to participate. The study involved interaction with a software prototype for 15–20 minutes followed by completion of the standardized Software Usability Measurement Inventory (SUMI) questionnaire. The study posed no more than minimal risk to participants: no personal health data were collected, no clinical interventions were performed, and all questionnaire responses were anonymous.
 
-> **[AUTHOR ACTION REQUIRED — MANDATORY BEFORE SUBMISSION]:** The following information MUST be supplied:
+### Confirmed Information (Supported by Thesis Documents)
+
+- **Institution:** Amhara Public Health Institute, Bahir Dar, Ethiopia
+- **Participants:** 26 (13 field epidemiologists, 7 public health workers, 6 laboratory technicians)
+- **Recruitment:** Purposive sampling from institute staff
+- **Activity:** 15–20 minutes prototype interaction + SUMI questionnaire completion
+- **Risk level:** Minimal (software interaction and anonymous questionnaire only)
+- **Anonymity:** SUMI responses were processed by an external office (HCIRG, University College Cork) — individual respondents are not identifiable in the results
+- **Data collected:** Standardized SUMI Likert-scale responses only; no personal health information
+
+### Missing Information (Must Be Supplied by Author)
+
+> **[AUTHOR ACTION REQUIRED — MANDATORY BEFORE SUBMISSION]:**
 >
-> 1. **Ethics approval authority:** Identify the institutional review board (IRB) or ethics committee that approved this study (e.g., Bahir Dar University Institutional Review Board, Amhara Public Health Institute Ethics Committee).
-> 2. **Approval reference number:** Provide the ethics approval/protocol reference number.
-> 3. **Approval date:** Provide the date ethics approval was granted.
-> 4. **Informed consent:** Confirm whether written informed consent was obtained from all participants prior to participation.
-> 5. If ethics review was not required under local regulations, provide a statement explaining the exemption basis.
+> 1. **Ethics approval authority:** Was this study reviewed by Bahir Dar University's Institutional Review Board, the Amhara Public Health Institute Ethics Committee, or another body? Provide the name.
+> 2. **Approval reference number:** Provide the protocol/reference number.
+> 3. **Approval date:** When was approval granted?
+> 4. **Informed consent method:** Was written informed consent obtained, or verbal consent? Provide confirmation.
+> 5. **If exempt:** If formal ethics review was not required (e.g., because the study involved only anonymous questionnaire completion with no identifiable data and posed no more than minimal risk), provide a statement explaining the exemption basis under Ethiopian or institutional regulations.
 >
-> Without this information, the manuscript cannot be submitted to any Wiley journal that requires ethics declarations for human participant research.
+> **Template statement for inclusion once details are confirmed:**
+>
+> *"This study was approved by [ETHICS AUTHORITY NAME] (protocol reference: [NUMBER], date: [DATE]). Written/verbal informed consent was obtained from all participants prior to study participation."*
+>
+> OR (if exempt):
+>
+> *"This study was exempt from formal ethics review under [INSTITUTION/REGULATION] because it involved only anonymous questionnaire completion following software interaction, collected no identifiable personal data, and posed no more than minimal risk to participants."*
