@@ -1,0 +1,219 @@
+\documentclass{article}
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm]{geometry}
+\usepackage[dvipsnames,svgnames,x11names,table]{xcolor}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{graphicx}
+\usepackage{booktabs,tabularx}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{colortbl}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\textsf{Consensus}}
+\fancyhead[R]{\textsf{CONSENSUS.APP}}
+\fancyfoot[C]{\textsf{\thepage\ / 7}}
+
+\begin{document}
+\noindent The attached thesis's \textbf{main gaps} are full on-chain storage, weak privacy architecture, and under-justified \textbf{PoA consensus}.
+\vspace{1em}
+
+\noindent The attached thesis explicitly records ``all surveillance data transactions'' on a shared Ethereum network and keeps ``a copy'' at every node, so its core architecture does not scale well as reporting volume, hierarchy depth, and participating facilities grow (Mekonen, 2022). The same attached text treats privacy mainly as immutability and tamper resistance, but that does not provide selective disclosure, revocation, or protection against ledger-level metadata exposure for sensitive surveillance data (Mekonen, 2022). It also adopts Proof of Authority without benchmarking it against other healthcare-suitable consensus families or discussing validator governance, fault tolerance, or trust concentration across a hierarchical public health network (Mekonen, 2022).
+
+\subsection*{Evidence Coverage Across Limitations}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.35}
+\begin{tabularx}{\textwidth}{l >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X >{\centering\arraybackslash}X}
+\toprule
+\textbf{Limitation} & \textbf{Scalability} & \textbf{Privacy} & \textbf{Low-Resource Fit} & \textbf{Implementation Maturity} \\
+\midrule
+Full on-chain storage & \cellcolor{cyan!70}\textcolor{white}{\textbf{12}} & \cellcolor{cyan!15}4 & \cellcolor{cyan!45}8 & \cellcolor{cyan!35}6 \\
+Privacy beyond immutability & \cellcolor{cyan!35}6 & \cellcolor{cyan!85}\textcolor{white}{\textbf{14}} & \cellcolor{cyan!40}7 & \cellcolor{cyan!25}5 \\
+Consensus selection & \cellcolor{cyan!55}\textcolor{white}{\textbf{10}} & \cellcolor{cyan!10}3 & \cellcolor{cyan!80}\textcolor{white}{\textbf{13}} & \cellcolor{cyan!40}7 \\
+Interoperability and governance & \cellcolor{cyan!25}5 & \cellcolor{cyan!45}8 & \cellcolor{cyan!50}9 & \cellcolor{cyan!20}4 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\noindent \textit{FIGURE 1 Evidence coverage across four thesis limitation domains}
+\vspace{1em}
+
+\noindent The strongest coverage is around scalability engineering and lightweight consensus, while real-world maturity and governance remain thinner. That pattern matters for IET Blockchain: the field now has many technical fixes, but fewer validated deployments in public-health surveillance, especially in low-resource settings (Li et al., 2025; Olu-Abiodun et al., 2025).
+
+\subsection*{Scalability Limitations}
+\noindent The attached thesis's largest scalability problem is architectural: it places the surveillance record directly on Ethereum rather than separating workflow proofs from bulk health data (Mekonen, 2022). Recent reviews identify healthcare's main blockchain bottlenecks as high data volume, real-time processing demands, storage growth, and falling performance as users increase (Abdul, 2024; Mazhar et al., 2025). Private Ethereum itself remains weaker than Hyperledger Fabric on invoke-heavy smart-contract workloads, with up to $5\times$ lower throughput and up to $26\times$ higher latency in one 2025 benchmark, which is relevant if your design depends on frequent reporting and supervisory contract calls (Khan et al., 2025).
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{p{3.2cm} p{3.5cm} p{3.5cm} X}
+\toprule
+\textbf{Solution Pattern} & \textbf{What It Changes} & \textbf{Why It Helps Low-Resource Surveillance} & \textbf{Representative 2024--2026 Evidence} \\
+\midrule
+Off-chain storage with IPFS & Store records off-chain, anchor hashes on-chain & Cuts storage duplication and gas & (Maher et al., 2024; Nandanwar \& Katarya, 2025; Kumar et al., 2025) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\newpage
+\fancyfoot[C]{\textsf{2 / 7}}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{p{3.2cm} p{3.5cm} p{3.5cm} X}
+\toprule
+\textbf{Solution Pattern} & \textbf{What It Changes} & \textbf{Why It Helps Low-Resource Surveillance} & \textbf{Representative 2024--2026 Evidence} \\
+\midrule
+Layer-2 rollups & Batch transactions off-chain & Raises throughput, lowers cost & (Song et al., 2024; Raghav et al., 2026; Dungarani et al., 2025) \\
+Sharding and hierarchy & Parallelize transactions and state & Fits district-to-national network tiers & (Quan et al., 2025; Maithili \& Amutha, 2025) \\
+Edge or fog assistance & Validate or preprocess near devices & Reduces bandwidth and latency & (Akter et al., 2025; Saha et al., 2025; Rhidoy et al., 2026) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\noindent \textit{FIGURE 2 Modern scalability patterns replacing full on-chain storage}
+\vspace{1em}
+
+\noindent State-of-the-art papers now converge on hybrid storage. Off-chain IPFS plus on-chain hashes or smart-contract pointers is repeatedly used to reduce blockchain load while preserving auditability (Maher et al., 2024; Nandanwar \& Katarya, 2025; Li et al., 2025). For more demanding systems, Layer-2 rollups and sharding push throughput much further: one 2026 healthcare exchange paper reports $96\%$ lower transaction cost and $57\%$ latency improvement with zk-rollup architecture, while a 2025 tri-layer sharding architecture reports $4500$ TPS at $12\text{ ms}$ average latency (Raghav et al., 2026; Maithili \& Amutha, 2025). General scalability reviews also argue that Layer-2 protocols outperform Layer-1 for throughput and efficiency because they move computation off mainnet (Song et al., 2024; Rebello et al., 2024).
+\vspace{1em}
+
+\noindent In low-resource settings, the most relevant scalability designs add edge or fog layers so rural facilities do not act as heavy blockchain peers. Reviews of healthcare sensor networks recommend edge and fog computing for latency reduction and scalability, and vaccine-chain work aimed at developing nations reports that edge computing reduced latency and computational overhead while increasing throughput by $36.1\%$ (Akter et al., 2025; Saha et al., 2025).
+
+\subsection*{Data Privacy Limitations}
+\noindent The attached thesis does not yet have a modern privacy model for public health surveillance. Immutability protects against tampering, but it does not stop overexposure of case-level data, metadata leakage, or overbroad access across health system tiers (Mekonen, 2022). Reviews of healthcare blockchain now explicitly note that public-permissionless Ethereum patterns face high transaction costs, scalability problems, and smart-contract vulnerabilities, while privacy-preserving healthcare solutions remain mostly early-stage (Li et al., 2025).
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{p{3.5cm} p{3.5cm} p{3.2cm} X}
+\toprule
+\textbf{Privacy Gap in Thesis} & \textbf{State-of-the-Art Fix} & \textbf{Practical Effect} & \textbf{Representative Evidence} \\
+\midrule
+No selective disclosure & ZKPs and zk-SNARKs & Verify without revealing records & (Myeong \& Ram, 2025; Nandanwar \& Katarya, 2025) \\
+No fine-grained access revocation & Smart-contract ACL or dynamic permissions & Grant, revoke, expire access & (Kumar et al., 2025; Rehman et al., 2024; Tawfik et al., 2025) \\
+On-chain exposure risk & IPFS plus encrypted off-chain files & Reduces direct ledger disclosure & (Nandanwar \& Katarya, 2025; Kumar et al., 2025) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\newpage
+\fancyfoot[C]{\textsf{3 / 7}}
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{p{3.5cm} p{3.5cm} p{3.2cm} X}
+\toprule
+\textbf{Privacy Gap in Thesis} & \textbf{State-of-the-Art Fix} & \textbf{Practical Effect} & \textbf{Representative Evidence} \\
+\midrule
+Weak governance and interoperability & FHIR-aware privacy workflows & Easier integration, better compliance & (Myeong \& Ram, 2025; Akter et al., 2025) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\noindent \textit{FIGURE 3 Privacy layers replacing immutability-only security assumptions}
+\vspace{1em}
+
+\noindent The leading privacy fix is a layered design: encrypted data remain off-chain, while Ethereum stores only proofs, permissions, hashes, or audit events (Nandanwar \& Katarya, 2025; Kumar et al., 2025). Zero-knowledge approaches are becoming the preferred way to validate health transactions without disclosing the underlying data (Myeong \& Ram, 2025; Devi et al., 2025). In one 2025 Ethereum-based healthcare protocol, zk-SNARK proof verification stayed under $100\text{ ms}$ with proof sizes below $2\text{ KB}$, but privacy came with higher gas cost, which the authors suggest moving to lower-cost Layer-2 networks to mitigate (Myeong \& Ram, 2025).
+\vspace{1em}
+
+\noindent Low-resource settings also need privacy methods that do not assume strong devices or stable institutional IT. Lightweight access-control systems, selective verification, and offloaded proof checking are becoming common. A ZKP-federated-learning study notes that verification can be offloaded to blockchain so constrained hospitals do not bear the full burden, and a post-quantum-inspired hospital architecture reports authorization verification latency of about $0.002\text{ ms}$ (Rao et al., 2025; Hao et al., 2025). That design logic is better aligned with district and community reporting chains than storing raw surveillance payloads on every validator.
+
+\subsection*{Consensus Mechanism Limitations}
+\noindent The attached thesis chooses PoA, but it does not justify when PoA is acceptable, how validators are appointed across administrative levels, or what happens if authority nodes collude or fail (Mekonen, 2022). That is a methodological weakness because recent work treats consensus selection as workload-specific. Reviews now frame consensus as the main source of latency, energy use, and scalability bottlenecks in healthcare and IoT blockchains (Haque et al., 2024; Pasupuleti, 2025; Rebello et al., 2024).
+
+\begin{table}[H]
+\centering
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\textwidth}{p{2.5cm} p{3cm} p{2.5cm} p{3cm} X}
+\toprule
+\textbf{Consensus Option} & \textbf{Best Fit} & \textbf{Main Advantage} & \textbf{Main Trade-Off} & \textbf{Recent Evidence} \\
+\midrule
+PoA & Permissioned health networks & Low overhead & Trust concentrated in validators & (Akter et al., 2025; Oyebode, 2025) \\
+DPoS & Resource-constrained multi-node networks & High throughput & Less decentralization & (Haque et al., 2024; Pasupuleti, 2025) \\
+PBFT variants & Trusted consortiums & Fast finality & Communication overhead at scale & (Li et al., 2025; Pasupuleti, 2025) \\
+Hybrid or adaptive consensus & Heterogeneous low-resource systems & Better workload fit & More design complexity & (Pasupuleti, 2025; Al-Awamy et al., 2025) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\noindent \textit{FIGURE 4 Consensus options for hierarchical low-resource healthcare networks}
+
+\newpage
+\fancyfoot[C]{\textsf{4 / 7}}
+\noindent
+\begin{minipage}{\textwidth}
+\textbf{Consensus} \hfill \textcolor{gray}{\small CONSENSUS.APP}
+\end{minipage}
+\vspace{1em}
+
+\noindent The evidence does not say PoA is wrong. It says PoA must be justified as a permissioned, trust-based choice rather than assumed to be generally secure. Reviews recommend PoA, PBFT, and DPoS over PoW for healthcare environments that need low-power operation and real-time responsiveness (Akter et al., 2025; Li et al., 2025). Comparative studies then split on which alternative is best under different constraints: DPoS offers very high throughput in constrained IoT settings, PoS is often the most balanced on energy and scalability, and PBFT remains attractive when deterministic finality and permissioned governance matter most (Haque et al., 2024; Pasupuleti, 2025).
+
+\noindent Newer state-of-the-art work is moving toward adaptive or specialized consensus. A Raft-based alliance blockchain for internet hospitals reports 92.3\% lower consensus latency, support for up to 1000 nodes, and 9.4--12.3\% energy savings per transaction relative to PBFT or RSA-based baselines (Hao et al., 2025). Other 2025--2026 studies report reputation-aware PBFT variants, ML-guided consensus, and hybrid validator-selection schemes that improve throughput or energy efficiency in constrained environments (Sajna et al., 2025; Jain \& Kumar, 2025; Al-Awamy et al., 2025).
+
+\subsection*{What the Best 2024--2026 Designs Look Like}
+\noindent The strongest recent architectures no longer use Ethereum as the place where all health data live. They use Ethereum smart contracts for coordination, consent, provenance, and enforcement, while storing health records or surveillance payloads off-chain and settling batches through rollups, sidechains, or consortium layers (Raghav et al., 2026; Dungarani et al., 2025; Rehman et al., 2024; Vo et al., 2025). They also push computation toward the edge or assign lighter roles to weak nodes, which is important in settings with poor connectivity, underpowered devices, and limited staff capacity (Shengcheng \& Zhang, 2024; Huang et al., 2024; Villegas-Ch. et al., 2025).
+
+\noindent A surveillance-oriented revision for IET Blockchain would therefore shift from ``all surveillance data on Ethereum'' to ``hierarchical event processing with selective anchoring.'' Local facilities or community workers would submit encrypted case data to off-chain storage, district or regional layers would batch and validate, and Ethereum contracts would retain only hashes, permissions, alerts, and audit trails (Abdul, 2024; Alhassan \& Wills, 2024). That architecture fits the realities of LMIC surveillance better because those systems face poor connectivity, workforce gaps, and infrastructural constraints that punish heavy replicated ledgers (Olu-Abiodun et al., 2025; Kuponiyi \& Akomolafe, 2025).
+
+\noindent Recent public-health literature also adds a governance warning that your thesis currently does not address. Low-resource surveillance systems can exclude rural or digitally marginal populations if they depend on smartphone-centric or high-resource assumptions, and digital systems need stronger local participation, fairness, and benefit-sharing frameworks (Joseph, 2025; Ali et al., 2025). For a hierarchical surveillance paper, that means privacy and consensus should be framed not only as engineering choices but as equity and governance choices.
+
+\subsection*{Publication-Oriented Takeaway}
+\noindent For your paper, the primary methodological limitations are clear: the attached thesis stores too much directly on Ethereum, defines privacy too narrowly, and selects PoA without a comparative rationale or governance model (Mekonen, 2022). The most important shift in the 2024--2026 literature is from monolithic Layer-1 blockchain architectures to hybrid, privacy-layered, resource-aware systems that combine off-chain storage, ZK-based verification, and lightweight or adaptive consensus (Maher et al., 2024; Raghav et al., 2026; Nandanwar \& Katarya, 2025; Pasupuleti, 2025). The biggest open question is not whether these techniques work in prototype form, but how well they hold up in real public-health deployments across low-resource, multi-tier surveillance systems with weak infrastructure, uneven digital access, and strong regulatory demands (Li et al., 2025; Kuponiyi \& Akomolafe, 2025).
+
+\newpage
+\fancyfoot[C]{\textsf{5 / 7}}
+\noindent
+\begin{minipage}{\textwidth}
+\textbf{Consensus} \hfill \textcolor{gray}{\small CONSENSUS.APP}
+\end{minipage}
+\vspace{1em}
+
+\noindent These search results were found and analyzed using Consensus, an AI-powered search engine for research. Try it at \url{https://consensus.app}. \textcopyright{} 2026 Consensus NLP, Inc. Personal, non-commercial use only; redistribution requires copyright holders' consent.
+
+\section*{References}
+\noindent Shengcheng, S., \& Zhang, X. (2024). Integrating blockchain and ZK-ROLLUP for efficient healthcare data privacy protection system via IPFS. \textit{Scientific Reports}, 14. \url{https://doi.org/10.1038/s41598-024-62292-9}
+\vspace{0.8em}
+
+\noindent Abdul, S. S. M. (2024). Navigating Blockchain's Twin Challenges: Scalability and Regulatory Compliance. \textit{Blockchains}. \url{https://doi.org/10.3390/blockchains2030013}
+\vspace{0.8em}
+
+\noindent Akter, S., Tabassum, M., Sultana, R., \& Bhuiyan, M. J. H. (2025). BLOCKCHAIN FOR REAL-TIME HEALTHCARE DATA ACQUISITION: A SYSTEMATIC REVIEW OF SENSOR NETWORK APPLICATIONS AND CHALLENGES. \textit{American Journal of Interdisciplinary Studies}. \url{https://doi.org/10.63125/m1vpxn97}
+\vspace{0.8em}
+
+\noindent Al-Awamy, A. A., Al-Shaibany, N., \& Alawamy, E. A. (2025). A Real-Time Hybrid Consensus Framework for IoT Blockchain Networks Using Validator Reputation, Markov Modeling, and Priority Queueing. مجلة جامعة صنعاء للعلوم التطبيقية والتكنولوجيا. \url{https://doi.org/10.59628/jast.v3i6.1751}
+\vspace{0.8em}
+
+\noindent Alhassan, J., \& Wills, O. (2024). Public health surveillance through community health workers: a scoping review of evidence from 25 low-income and middle-income countries. \textit{BMJ Open}, 14. \url{https://doi.org/10.1136/bmjopen-2023-079776}
+\vspace{0.8em}
+
+\noindent Ali, J., Esmonde, K., Agudelo-Londoño, S., Jannat, Z., Shrestha, P., Torres-Quintero, A., \& Mwaka, E. (2025). ``Digital benefit sharing'' for non-communicable disease risk factor surveillance in low -- and middle-income countries: implications for digital health governance. \textit{Policy Studies}, 47, 249 -- 266. \url{https://doi.org/10.1080/01442872.2025.2452437}
+\vspace{0.8em}
+
+\noindent Devi, M., Singh, N. C., \& Singh, T. B. (2025). Zero-Knowledge Proof-Based Privacy-Preserving Smart Contracts for Healthcare. \textit{INTERNATIONAL JOURNAL OF SCIENTIFIC RESEARCH IN ENGINEERING AND MANAGEMENT}. \url{https://doi.org/10.55041/ijsrem52449}
+\vspace{0.8em}
+
+\noindent Dungarani, R., Patel, D., Patel, N., Doshi, H., Prajapati, H., \& Deshmukh, P. R. (2025). Proof Without Exposure: High-Throughput Blockchain Transactions Via Privacy-Preserving Layer-2 Aggregation. \textit{2025 IEEE International Conference on Blockchain and Distributed Systems Security (ICBDS)}, 1--11. \url{https://doi.org/10.1109/icbds67396.2025.11377345}
+\vspace{0.8em}
+
+\noindent Hao, L., Wang, R., Wang, X., Yue, X., Tariq, N., \& Sajid, A. (2025). Post-quantum-inspired scalable blockchain architecture for internet hospital systems with lightweight privacy-preserving access control. \textit{PLOS One}, 20, e0332887 -- e0332887. \url{https://doi.org/10.1371/journal.pone.0332887}
+\vspace{0.8em}
+
+\noindent Haque, E. U., Abbasi, W., Almogren, A., Choi, J., Altameem, A., Rehman, A., \& Hamam, H. (2024). Performance enhancement in blockchain based IoT data sharing using lightweight consensus algorithm. \textit{Scientific Reports}, 14. \url{https://doi.org/10.1038/s41598-024-77706-x}
+\vspace{0.8em}
+
+\noindent Haque, E. U., Shah, A., Iqbal, J., Ullah, S. S., Alroobaea, R., \& Hussain, S. (2024). A scalable blockchain based framework for efficient IoT data management using lightweight consensus. \textit{Scientific Reports}, 14. \url{https://doi.org/10.1038/s41598-024-58578-7}
+\vspace{0.8em}
+
+\noindent Huang, C., Song, R., Gao, S., Guo, Y., \& Xiao, B. (2024). Data Availability and Decentralization: New Techniques for zk-Rollups in Layer 2 Blockchain Networks. \textit{ArXiv}, abs/2403.10828. \url{https://doi.org/10.48550/arxiv.2403.10828}
+
+\end{document}
