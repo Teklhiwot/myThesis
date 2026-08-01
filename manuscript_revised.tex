@@ -1,0 +1,543 @@
+% Wiley NJD v5 Template - Disease Early Warning and Surveillance
+\documentclass[AMA,LATO1COL]{WileyNJD-v2}
+
+% Additional packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{url}
+
+% Article metadata
+\articletype{Research Article}
+
+\received{XX Month XXXX}
+\revised{XX Month XXXX}
+\accepted{XX Month XXXX}
+
+\raggedbottom
+
+\begin{document}
+
+\title{Blockchain-Based Architectural Model for Disease Early Warning and Surveillance}
+
+\author[1]{Teklhiwot Mekonen\textsuperscript{*}}
+\author[1]{Esubalew Alemneh}
+
+\authormark{Mekonen and Alemneh}
+
+\address[1]{\orgdiv{Faculty of Computing, Bahir Dar Institute of Technology}, \orgname{Bahir Dar University}, \orgaddress{\city{Bahir Dar}, \country{Ethiopia}}}
+
+\corres{*Teklhiwot Mekonen, Faculty of Computing, Bahir Dar Institute of Technology, Bahir Dar University, Bahir Dar, Ethiopia. \email{teklhiwot@example.com}}
+
+\presentaddress{Faculty of Computing, Bahir Dar Institute of Technology, Bahir Dar University, Bahir Dar, Ethiopia}
+
+\abstract{Disease early warning and surveillance (DEWS) systems are critical public health infrastructure that depend on timely, accurate, and secure information flow across hierarchically organized health institutions. Existing DEWS systems in resource-constrained settings suffer from data and process centralization, security vulnerabilities, traceability gaps, manual completeness verification procedures, and inter-organizational interoperability barriers. This paper presents a blockchain-based architectural model that addresses these limitations by integrating Ethereum smart contracts with the four core surveillance processes: hierarchical disease case reporting across five organizational tiers, laboratory result reporting through a tiered laboratory network, automated report completeness verification, and multi-dimensional epidemiological data analysis (temporal, spatial, and demographic). The model employs a factory contract pattern to implement hierarchical access control with bidirectional information flow and immutable audit trails. A functional prototype deployed on the Ethereum Rinkeby test network demonstrates implementation feasibility. Three-dimensional evaluation validates the model: performance assessment across 10 experiments demonstrates stable block generation times of 12--14 seconds under Proof of Authority consensus; usability evaluation using the Software Usability Measurement Inventory (SUMI) with 26 domain professionals (epidemiologists, public health workers, laboratory technicians) yields scores of 60.46--68.96 across all six scales, significantly exceeding the standardized population mean of 50; and security evaluation through threat modeling confirms resistance to man-in-the-middle, denial-of-service, and traffic analysis attacks. The results demonstrate that blockchain technology provides a viable architectural paradigm for decentralized, secure, immutable, and traceable disease surveillance systems.}
+
+\keywords{blockchain, disease early warning, surveillance, Ethereum, smart contracts, health informatics, distributed systems}
+
+\jnlcitation{\cmark[Authors]}
+
+\maketitle
+
+%% ===== INTRODUCTION =====
+\section{Introduction}\label{sec:introduction}
+
+Infectious disease early warning and surveillance (DEWS) systems are critical public health infrastructure that enable timely detection, reporting, and response to disease outbreaks. Effective surveillance depends on accurate, complete, and timely information flow across hierarchically organized health institutions---from community health posts through woreda, zone, and regional offices to national public health authorities. In resource-constrained settings such as Ethiopia, these systems face persistent structural challenges that undermine their effectiveness.
+
+The existing DEWS infrastructure in Ethiopia suffers from five interrelated deficiencies: (1) data and process centralization, which introduces single-point-of-failure risks and impedes location-based adaptability; (2) data security vulnerabilities arising from the absence of tamper-proof record-keeping; (3) traceability gaps that prevent reliable audit trails across the reporting hierarchy; (4) reliance on manual or fragmented software-based procedures for report completeness verification; and (5) interoperability barriers between participating institutions that disrupt information flow across organizational boundaries.
+
+Prior approaches to disease surveillance automation have predominantly employed artificial intelligence (AI) and machine learning techniques. However, these approaches exhibit fundamental limitations in the DEWS context: susceptibility to adversarial manipulation of input data,\cite{finlayson2019adversarial} opacity of decision-making processes that erodes trust among public health practitioners,\cite{core2012building} inherent data centralization requirements,\cite{kelly2019key} limited generalizability outside training domains,\cite{kelly2019key} and dependence on readily available clinical datasets that are typically siloed across healthcare institutions.\cite{kelly2019key} These limitations indicate that AI-based approaches alone cannot address the structural deficiencies of centralized surveillance architectures.
+
+Blockchain technology offers an alternative architectural paradigm characterized by decentralization, immutability, cryptographic security, and transaction traceability---properties that directly address the identified deficiencies of existing DEWS systems. A blockchain-based architecture distributes data storage and processing across network nodes, eliminates single points of failure, maintains tamper-proof transaction records, and enforces transparent audit trails without requiring trusted intermediaries.
+
+This paper presents the design, implementation, and evaluation of a blockchain-based model for disease early warning and surveillance. The model leverages Ethereum smart contracts to automate the four core surveillance processes: hierarchical disease case reporting, laboratory result reporting, report completeness verification, and epidemiological data analysis. A functional prototype is developed on the Ethereum platform and subjected to performance, usability, and security evaluation.
+
+The principal contributions of this work are:
+\begin{enumerate}
+\item A blockchain-based architectural model for disease early warning and surveillance that integrates decentralization, immutability, and traceability into the hierarchical reporting workflow, addressing the data centralization and security vulnerabilities of existing systems.
+\item A smart contract design employing the factory pattern to implement hierarchical access control across five organizational tiers, enabling bidirectional information flow with immutable audit trails.
+\item An automated report completeness verification mechanism embedded within the smart contract architecture, replacing manual cross-referencing procedures.
+\item A functional prototype implemented on the Ethereum platform, demonstrating the feasibility of blockchain-based surveillance operations.
+\item A comprehensive three-dimensional evaluation encompassing performance (block generation time), usability (Software Usability Measurement Inventory), and security (threat model assessment), validating the model against real-world operational requirements.
+\end{enumerate}
+
+The remainder of this paper is organized as follows. Section~\ref{sec:background} presents background context and related work. Section~\ref{sec:methodology} describes the research methodology. Section~\ref{sec:model} details the proposed blockchain-based model. Section~\ref{sec:implementation} presents the prototype implementation. Section~\ref{sec:evaluation} reports evaluation results. Section~\ref{sec:discussion} discusses implications and limitations. Section~\ref{sec:conclusion} concludes the paper and identifies future research directions.
+
+%% ===== BACKGROUND AND RELATED WORK =====
+\section{Background and Related Work}\label{sec:background}
+
+\subsection{Blockchain Technology}\label{subsec:blockchain}
+
+A blockchain is a decentralized, distributed ledger that records transactions in cryptographically linked blocks, each containing a hash of the previous block, a timestamp, and transaction data. This chaining mechanism renders the ledger tamper-evident: altering any historical record necessitates recomputation of all subsequent block hashes and consensus agreement from a majority of network nodes. The properties most relevant to health information systems are immutability (committed records cannot be retroactively modified), decentralization (no single point of failure or control), consensus-driven validation (Byzantine fault tolerance without trusted intermediaries), and transaction traceability (complete audit trails across distributed participants).
+
+Blockchain platforms are categorized along two dimensions: access control (public vs.\ private) and participation governance (permissioned vs.\ permissionless). Public permissionless blockchains (e.g., Ethereum) permit unrestricted participation and are suited to applications requiring transparency and open verifiability, whereas private permissioned variants restrict network membership to authorized entities. For a comprehensive taxonomy, the reader is referred to Yaga et al.\cite{yaga2018blockchain}
+
+\subsection{Platform Selection}\label{subsec:platform}
+
+The Ethereum platform was selected for this work based on a structured comparison against Bitcoin and XRPL (Ripple) across eleven criteria (Table~\ref{tab:platform}). Ethereum uniquely satisfies the requirements of the proposed model: native support for smart contracts and decentralized applications (dApps), a Turing-complete programming language (Solidity) enabling arbitrary business logic implementation, cross-industry applicability, digital identity management, distributed cloud computing capabilities, and a 14-second block time suitable for near-real-time surveillance reporting. Bitcoin lacks smart contract and dApp support, while XRPL does not support smart contracts, dApps, human-readable addresses, or data oracles---all of which are required by the hierarchical surveillance workflow.
+
+\begin{table}[!ht]
+\caption{Blockchain platform comparison (selection criteria).}\label{tab:platform}
+\begin{tabular*}{\columnwidth}{@{\extracolsep\fill}lccc@{}}
+\toprule
+Criterion & Ethereum & Bitcoin & XRPL \\
+\midrule
+Smart contracts & Yes & No & No \\
+dApp support & Yes & No & No \\
+Turing-complete language & Yes & No & No \\
+Digital identity & Yes & Yes & No \\
+Data oracles & Yes & Yes & No \\
+Human-readable addresses & Yes & Yes & No \\
+Block time & 14 s & 10 min & 4 s \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\subsection{Disease Early Warning and Surveillance in Ethiopia}\label{subsec:dews}
+
+Ethiopia's disease early warning and surveillance (DEWS) system operates through a hierarchical reporting structure encompassing community health posts, woreda health offices, zone health offices, regional health offices, and the national Ethiopian Public Health Institute (EPHI)/Public Health Emergency Management (PHEM) center. The system conducts both indicator-based surveillance (structured data from scheduled reporting) and event-based surveillance (rapid capture of informal signals indicating potential public health risks).
+
+Twenty priority diseases and conditions are designated for national surveillance, classified into 13 immediately reportable conditions (requiring notification within 30 minutes of identification) and 7 weekly reportable conditions. All levels calculate report completeness on a weekly basis---defined as the proportion of reporting units that submitted data on time within a catchment area. Laboratory-based surveillance operates through a tiered network (woreda, zone, regional, national) responsible for pathogen identification and specimen confirmation.
+
+The current system relies on paper-based reporting with hierarchical compilation at each level. Data flows upward from health posts through woreda and zone to regional and national levels, while feedback and information sharing flow downward. This architecture suffers from the five deficiencies identified in Section~\ref{sec:introduction}: centralization, security vulnerabilities, traceability gaps, manual completeness verification, and interoperability barriers between organizational levels.
+
+\subsection{Related Work}\label{subsec:related}
+
+Several studies have applied blockchain technology to healthcare data management. Omar et al.\cite{omar2019privacy} proposed a patient-centric blockchain system utilizing decentralization to mitigate cloud data security risks and cryptographic functions to ensure data immutability; however, the system lacks interoperability between actors (patients, physicians, hospitals). Griggs et al.\cite{griggs2018healthcare} developed blockchain-based smart contracts for securing medical IoT sensor data with HIPAA-compliant automated notifications, though their system exhibits transaction delays that limit real-time effectiveness. Quaini et al.\cite{quaini2018model} presented UniRec, a blockchain-based distributed electronic health record architecture evaluated through test scenarios, which suffers from prohibitive disk space requirements at scale. Zhang et al.\cite{zhang2018fhirchain} proposed FHIRChain, a blockchain architecture meeting ONC interoperability requirements for collaborative cancer care, but reported semantic interoperability challenges and legacy system compatibility limitations.
+
+In the domain of disease surveillance specifically, machine learning approaches have been explored. Bollig et al.\cite{bollig2020machine} applied deep learning (LSTM networks) to syndromic surveillance using veterinary necropsy reports, demonstrating temporal and spatial disease pattern detection over 33,000 reports across 14 years. Harvey et al.\cite{harvey2021predicting} developed a Gaussian Process and Random Forest-based malaria early warning system for Burkina Faso, predicting 13-week case rates from routine health facility data. Rubio-Solis et al.\cite{rubiosolis2019zika} proposed neural network-based predictive surveillance for dengue at district level in Brazil. While these ML-based approaches demonstrate predictive utility, they inherit the fundamental limitations identified in Section~\ref{sec:introduction}: data centralization requirements, adversarial vulnerability, and limited generalizability.
+
+Table~\ref{tab:related} summarizes the comparative analysis.
+
+\begin{table*}[!ht]
+\caption{Comparative analysis of related work.}\label{tab:related}
+\begin{tabular*}{\textwidth}{@{\extracolsep\fill}llll@{}}
+\toprule
+Study & Domain & Technology & Key Limitation \\
+\midrule
+Omar et al.\cite{omar2019privacy} & Patient data management & Blockchain & No interoperability between actors \\
+Griggs et al.\cite{griggs2018healthcare} & Medical IoT security & Blockchain + Smart contracts & Transaction delay \\
+Quaini et al.\cite{quaini2018model} & Electronic health records & Blockchain & Disk space scalability \\
+Zhang et al.\cite{zhang2018fhirchain} & Clinical data sharing & Blockchain (FHIRChain) & Semantic interoperability \\
+Bollig et al.\cite{bollig2020machine} & Syndromic surveillance & Deep learning (LSTM) & Data availability; centralization \\
+Harvey et al.\cite{harvey2021predicting} & Malaria early warning & GP + Random Forest & Limited statistical rigor \\
+Rubio-Solis et al.\cite{rubiosolis2019zika} & Dengue prediction & Neural network + ELM & Domain-specific; centralized \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
+\textbf{Research gap.} No prior work addresses the specific intersection of blockchain technology and infectious disease early warning and surveillance. Existing blockchain-in-healthcare studies focus on patient records, medical IoT, or clinical data sharing---none targets the hierarchical multi-tier reporting workflow characteristic of national DEWS systems. Conversely, surveillance-focused studies employ centralized ML approaches that cannot provide the immutability, decentralization, and traceability guarantees required for trustworthy public health reporting. The present work addresses this gap by proposing and evaluating a blockchain-based model purpose-built for the DEWS domain.
+
+%% ===== RESEARCH METHODOLOGY =====
+\section{Research Methodology}\label{sec:methodology}
+
+\subsection{Research Design}\label{subsec:design}
+
+This study adopts the Systems Development Research Methodology (SDRM) proposed by Nunamaker et al.\cite{nunamaker1990systems} SDRM provides a structured, iterative framework for constructing and evaluating information systems artifacts through five stages: (1) concept design, (2) system architecture development, (3) system analysis and design, (4) prototype development, and (5) observation and evaluation. This methodology is appropriate for the present work because the research objective---designing a blockchain-based model and demonstrating its feasibility through a functional prototype---aligns with SDRM's theory-testing orientation and proof-by-demonstration approach. Figure~\ref{fig:sdrm} illustrates the SDRM process.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[SDRM Process Diagram]\\Figure placeholder\vspace{2em}}}
+\caption{Systems Development Research Methodology (SDRM) process.}\label{fig:sdrm}
+\end{figure}
+
+The five stages were instantiated as follows. In the concept design stage, a structured literature review identified the limitations of existing DEWS systems and established blockchain technology as a candidate solution. The architecture development stage produced the four-component blockchain-based model (Section~\ref{sec:model}). The analysis and design stage specified smart contract structures, access control logic, and interaction flows. The prototype development stage implemented the model on the Ethereum platform. The observation and evaluation stage subjected the prototype to performance, usability, and security assessment.
+
+\subsection{Blockchain Suitability Assessment}\label{subsec:suitability}
+
+Prior to model development, a formal assessment determined whether blockchain technology constitutes an appropriate solution for the DEWS domain. From eight published blockchain decision frameworks (Figure~\ref{fig:frameworks}), the IEEE Spectrum blockchain decision tree\cite{peck2017blockchain} was selected for its standardization, parsimony, and accessibility to domain stakeholders. The framework poses structured questions addressing satisfaction with traditional databases, the number of active data participants, trust levels among participants, and privacy and control requirements.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Blockchain Decision Frameworks]\\Figure placeholder\vspace{2em}}}
+\caption{Blockchain decision frameworks evaluated.}\label{fig:frameworks}
+\end{figure}
+
+A survey was administered to 10 purposively sampled epidemiologists and decision-making staff at the Amhara Public Health Institute between February 14 and March 2, 2021. Semi-structured interviews were conducted individually, with each respondent briefed on blockchain fundamentals before completing the IEEE decision tree questionnaire. Table~\ref{tab:survey} presents the responses.
+
+\begin{table}[!ht]
+\caption{Blockchain suitability survey results (n=10).}\label{tab:survey}
+\begin{tabular*}{\columnwidth}{@{\extracolsep\fill}lc@{}}
+\toprule
+Decision Criterion & Affirmative (\%) \\
+\midrule
+Traditional methods inadequate & 90 \\
+Multiple participants need data updates & 100 \\
+Low mutual trust among actors & 90 \\
+Need for shared data store & 80 \\
+Need for transaction transparency & 70 \\
+Need for immutable records & 80 \\
+Need for decentralized control & 70 \\
+\midrule
+Average & 82.85 \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+Across the seven decision criteria, an average of 82.85\% of respondents provided affirmative answers---exceeding the majority threshold required by the framework to classify a use case as blockchain-suitable. Notable results include: 90\% confirmed that traditional paper-based methods cannot meet operational needs; 100\% affirmed that multiple participants require data update capabilities; and 90\% indicated low mutual trust among current system actors. These results validate the adoption of blockchain technology for the DEWS workflow and informed the subsequent model design.
+
+\subsection{Scope and Limitations}\label{subsec:scope}
+
+The methodology scope encompasses design, prototyping, and evaluation of blockchain-based surveillance operations. The study is limited to the Ethiopian DEWS context, employs the Ethereum Rinkeby test network rather than mainnet deployment, and draws survey participants from a single regional public health institute. These constraints are acknowledged as limitations affecting generalizability; however, the architectural model itself is designed to be platform-agnostic and transferable to other national surveillance contexts.
+
+%% ===== PROPOSED MODEL =====
+\section{Proposed Blockchain-Based Model for Disease Early Warning and Surveillance}\label{sec:model}
+
+The proposed model integrates Ethereum blockchain technology with the infectious disease early warning and surveillance (DEWS) workflow to address the limitations of centralized reporting systems---namely, data integrity vulnerabilities, traceability gaps, single-point-of-failure risks, and the absence of automated completeness enforcement. The architecture leverages Ethereum smart contracts to automate and secure four core surveillance processes: (1) hierarchical disease case reporting, (2) laboratory result reporting, (3) report completeness verification, and (4) epidemiological data analysis. Figure~\ref{fig:architecture} presents the overall architectural model.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Overall Architectural Model]\\Figure placeholder\vspace{2em}}}
+\caption{Blockchain-based architectural model for disease early warning and surveillance.}\label{fig:architecture}
+\end{figure}
+
+The model operates on a distributed Ethereum network in which each participating node maintains a complete copy of the blockchain ledger. Health facilities and laboratories interact with deployed smart contracts through standard Ethereum client interfaces, ensuring that all surveillance transactions are recorded immutably, transparently, and traceably across organizational boundaries. The smart contract mechanism for the DEWS domain is illustrated in Figure~\ref{fig:smartcontract}: contracts are written in Solidity, compiled into EVM bytecode, and deployed to the network where they govern the business logic of each surveillance task. End users interact with the blockchain through browser-based wallet extensions, while the application layer communicates with the network via the Web3.js library (Figure~\ref{fig:web3}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Smart Contract Mechanism]\\Figure placeholder\vspace{2em}}}
+\caption{Smart contract mechanism for the DEWS domain.}\label{fig:smartcontract}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Web3.js Application Layer]\\Figure placeholder\vspace{2em}}}
+\caption{Application layer communication via Web3.js.}\label{fig:web3}
+\end{figure}
+
+\subsection{Hierarchical Disease Reporting}\label{subsec:reporting}
+
+The disease reporting component implements the five-tier hierarchical structure of Ethiopia's public health surveillance system: community health posts, woreda health offices, zone health offices, regional health offices, and the Ethiopian Health and Nutrition Research Institute/Public Health Emergency Management (EHNRI/PHEM) center.
+
+The contract architecture employs a factory pattern. A dedicated report generator contract is deployed first and serves as the factory responsible for instantiating and managing individual report contracts for each health organization. Upon deployment, each organizational level gains the capability to write surveillance reports as blockchain transactions. The hierarchical access control model enforces the following constraints: health offices at higher levels can retrieve and review reports generated by subordinate organizations, and can submit feedback or request rework through the same contract interface. Subordinate levels cannot access peer-level or superior-level reports unless explicitly authorized.
+
+This design ensures bidirectional information flow---upward for case reporting and downward for supervisory feedback---while maintaining an immutable, timestamped audit trail of every transaction. Each report submission, review action, and feedback message constitutes a permanent blockchain record that cannot be altered retroactively. Figure~\ref{fig:reporting} illustrates the disease reporting process design.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Disease Reporting Process]\\Figure placeholder\vspace{2em}}}
+\caption{Disease reporting process design.}\label{fig:reporting}
+\end{figure}
+
+\subsection{Laboratory Network Integration}\label{subsec:laboratory}
+
+The laboratory reporting component addresses rapid pathogen identification and efficient information exchange across the four-tiered laboratory network: woreda, zone, regional, and national levels. Each laboratory is assigned a dedicated smart contract upon deployment, mirroring the organizational structure.
+
+Laboratory contracts support hierarchical interaction with bidirectional transaction flows. Forward (upward) reporting transmits identification results, specimen metadata, and pathogen characterization data to higher-level laboratory facilities for confirmation or further analysis. Backward (downward) communication enables feedback dissemination, result confirmation, and follow-up information sharing from reference laboratories to originating facilities. This bidirectional flow ensures that pathogen identification results propagate through the laboratory network without information loss or unauthorized modification. Figure~\ref{fig:laboratory} depicts the laboratory network design.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Laboratory Network Design]\\Figure placeholder\vspace{2em}}}
+\caption{Laboratory network reporting design.}\label{fig:laboratory}
+\end{figure}
+
+\subsection{Report Completeness Verification}\label{subsec:completeness}
+
+Timely and complete reporting constitutes a fundamental requirement for effective disease surveillance. The Ethiopian DEWS protocol mandates weekly reporting, and a report is classified as complete when all reporting units within a designated catchment area have submitted their data within the prescribed reporting period.
+
+To enforce this requirement programmatically, every smart contract at each hierarchical level incorporates a report completeness calculator function. This function queries the ledger to verify whether all subordinate reporting units have generated their surveillance reports on schedule. The function returns a completeness ratio computed as the number of reports received divided by the total number of expected reports for the given period and catchment area. This mechanism automates a task currently performed through manual cross-referencing of paper-based submissions, eliminating human error in completeness assessment and providing real-time visibility into reporting gaps. Figure~\ref{fig:completeness} illustrates the completeness verification design.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Completeness Verification]\\Figure placeholder\vspace{2em}}}
+\caption{Report completeness verification design.}\label{fig:completeness}
+\end{figure}
+
+\subsection{Surveillance Data Analysis}\label{subsec:analysis}
+
+The data analysis component implements three epidemiological analysis dimensions derived from standard public health surveillance methodology:
+
+\textbf{Analysis by time.} Temporal variables (day, week, month) are extracted from reported case data to quantify changes in case counts and mortality rates over defined periods. Temporal trend analysis enables detection of anomalous increases that may signal outbreak onset. Figure~\ref{fig:temporal} presents the temporal analysis design.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Temporal Analysis]\\Figure placeholder\vspace{2em}}}
+\caption{Temporal analysis design.}\label{fig:temporal}
+\end{figure}
+
+\textbf{Analysis by place.} Geospatial variables (kebele, woreda, town) are extracted to support areal infection spread analysis across administrative boundaries at multiple hierarchical levels. Spatial analysis identifies geographic clustering of cases and tracks the directionality of disease spread. Figure~\ref{fig:spatial} presents the spatial analysis design.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Spatial Analysis]\\Figure placeholder\vspace{2em}}}
+\caption{Spatial analysis design.}\label{fig:spatial}
+\end{figure}
+
+\textbf{Analysis by person.} Demographic variables (age, sex, ethnicity, occupation) are extracted from reported data to compare the total number and proportion of suspected and confirmed cases for a given infection. A dedicated smart contract function at each reporting level executes these comparative computations, enabling identification of disproportionately affected population subgroups. Figure~\ref{fig:person} presents the person-based analysis design.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Person-Based Analysis]\\Figure placeholder\vspace{2em}}}
+\caption{Person-based analysis design.}\label{fig:person}
+\end{figure}
+
+\subsubsection{Morbidity Measures}\label{subsubsec:morbidity}
+
+Two standard epidemiological measures are computed within the analysis framework to support early warning decision-making:
+
+\textit{Incidence proportion} quantifies the fraction of an initially disease-free population that develops disease within a specified time period, encompassing all new cases relative to the total at-risk population.\cite{cdc2012principles} This measure supports detection of emerging outbreaks by tracking the rate at which new cases appear. Figure~\ref{fig:incidence} illustrates the incidence analysis workflow.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Incidence Analysis]\\Figure placeholder\vspace{2em}}}
+\caption{Incidence proportion analysis workflow.}\label{fig:incidence}
+\end{figure}
+
+\textit{Prevalence} quantifies the proportion of persons in a population who have a particular disease at a specified point in time or over a defined period, encompassing both new and pre-existing cases.\cite{cdc2012principles} Prevalence tracking provides a measure of overall disease burden within a surveillance catchment. Figure~\ref{fig:prevalence} illustrates the prevalence analysis workflow.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Prevalence Analysis]\\Figure placeholder\vspace{2em}}}
+\caption{Prevalence analysis workflow.}\label{fig:prevalence}
+\end{figure}
+
+The integration of these epidemiological measures within the blockchain-based architecture ensures that morbidity computations are performed on verified, tamper-proof data, and that the resulting early warning indicators inherit the integrity guarantees of the underlying distributed ledger.
+
+%% ===== PROTOTYPE IMPLEMENTATION =====
+\section{Prototype Implementation}\label{sec:implementation}
+
+\subsection{Development Environment}\label{subsec:devenv}
+
+The prototype was implemented using the following technology stack: Solidity for smart contract development, Node.js as the runtime environment, React and Next.js for the front-end application layer, Web3.js for blockchain interaction, MetaMask for transaction signing, Ganache CLI for local blockchain emulation during development, and Semantic UI for interface theming. Smart contracts were compiled using a custom compilation script and deployed to the Ethereum Rinkeby test network via the Infura public API, with transaction signing handled by the Truffle HD Wallet Provider.
+
+The project architecture comprises five modules: Ethereum components (smart contracts, compilation, and deployment logic), React page components, Next.js routing and server-side rendering, overlay UI components, and test components.
+
+\subsection{Smart Contract Architecture}\label{subsec:contracts}
+
+The prototype implements two smart contracts within a single Solidity source file. The first contract, \texttt{Report}, encapsulates individual surveillance report instances with parameters for the creator address and report details. The second contract, \texttt{ReportFactory}, implements the factory pattern---it deploys and manages all \texttt{Report} contract instances on the network. This separation ensures that the factory contract retains an unmodified copy of the \texttt{Report} source code, preventing post-deployment tampering. The factory maintains a registry of all deployed report addresses, providing a complete index of surveillance records (Figure~\ref{fig:contracts}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Smart Contract Architecture]\\Figure placeholder\vspace{2em}}}
+\caption{Smart contract architecture: Report and ReportFactory.}\label{fig:contracts}
+\end{figure}
+
+Deployment follows a one-time pattern: the \texttt{ReportFactory} is deployed once to the Rinkeby network, and subsequently creates new \texttt{Report} instances on demand. A Web3 instance connected through the Infura API provider handles all deployment transactions (Figures~\ref{fig:deploy1},~\ref{fig:deploy2}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Deployment Configuration]\\Figure placeholder\vspace{2em}}}
+\caption{Contract deployment configuration.}\label{fig:deploy1}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Deployment Script]\\Figure placeholder\vspace{2em}}}
+\caption{Deployment script execution.}\label{fig:deploy2}
+\end{figure}
+
+\subsection{Functional Operations}\label{subsec:operations}
+
+The prototype supports seven core operations that implement the model described in Section~\ref{sec:model}:
+
+\textbf{Case report creation.} A case reporter initiates a transaction through MetaMask to the \texttt{ReportFactory} contract, which deploys a new \texttt{Report} instance with a unique blockchain address. The factory records and indexes all deployed report addresses (Figures~\ref{fig:create1}--\ref{fig:create3}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Case Report Creation]\\Figure placeholder\vspace{2em}}}
+\caption{Case report creation interface.}\label{fig:create1}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[MetaMask Transaction]\\Figure placeholder\vspace{2em}}}
+\caption{MetaMask transaction confirmation.}\label{fig:create2}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Deployed]\\Figure placeholder\vspace{2em}}}
+\caption{Deployed report confirmation.}\label{fig:create3}
+\end{figure}
+
+\textbf{Report listing and detail display.} The application queries the deployed \texttt{ReportFactory} instance via Web3 to retrieve all registered report addresses, then renders the list through the React front-end. Individual report details are retrieved through a contract function that returns the summary of each recorded report (Figures~\ref{fig:list},~\ref{fig:detail}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report List]\\Figure placeholder\vspace{2em}}}
+\caption{Report listing interface.}\label{fig:list}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Detail]\\Figure placeholder\vspace{2em}}}
+\caption{Report detail display.}\label{fig:detail}
+\end{figure}
+
+\textbf{Report review and feedback.} Supervisory-level users mark reports as read, which updates the read count and unlocks rework request capabilities. When a report requires correction, supervisors submit rework requests with descriptive annotations, creating an immutable feedback record on the blockchain (Figures~\ref{fig:review},~\ref{fig:feedback}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Review]\\Figure placeholder\vspace{2em}}}
+\caption{Report review interface.}\label{fig:review}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Rework Request]\\Figure placeholder\vspace{2em}}}
+\caption{Rework request submission.}\label{fig:feedback}
+\end{figure}
+
+\textbf{Surveillance data analysis.} The analysis module presents reported case data across three dimensions: temporal (weekly aggregation), spatial (location-based distribution), and demographic (age and gender attributes), implementing the epidemiological analysis framework defined in Section~\ref{subsec:analysis} (Figure~\ref{fig:analysis}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Analysis Dashboard]\\Figure placeholder\vspace{2em}}}
+\caption{Surveillance data analysis dashboard.}\label{fig:analysis}
+\end{figure}
+
+\textbf{Laboratory result reporting.} Laboratory technicians record pathogen identification results through a dedicated form interface, with submissions deployed as blockchain transactions. All recorded laboratory reports are retrievable and displayed in list format (Figure~\ref{fig:lab}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Laboratory Reporting]\\Figure placeholder\vspace{2em}}}
+\caption{Laboratory result reporting interface.}\label{fig:lab}
+\end{figure}
+
+\subsection{Deployment Configuration}\label{subsec:deployment}
+
+The prototype was deployed on the Ethereum Rinkeby test network, a proof-of-authority testnet that simulates mainnet behavior without incurring real transaction costs. This deployment configuration enables realistic performance evaluation while maintaining a controlled experimental environment. The Infura API provides node access for deployment and runtime interaction without requiring local full-node operation.
+
+%% ===== EVALUATION =====
+\section{Evaluation}\label{sec:evaluation}
+
+The proposed model and its prototype implementation were evaluated across three dimensions: performance, usability, and security. This multi-dimensional approach assesses operational feasibility (performance), user acceptance (usability), and resilience to adversarial threats (security).
+
+\subsection{Performance Evaluation}\label{subsec:performance}
+
+Performance was assessed through block generation time measurement on the Ethereum Rinkeby test network. Ten consecutive experiments were conducted, each measuring the time to generate 12 sequential blocks. The measurement procedure operates as follows: (1) the user node queries the current block number $N$ and records the timestamp $t_N$; (2) the node repeatedly queries the current block number $n$ until 12 increments are observed; (3) at each increment, the time span between consecutive blocks is calculated as $t_n - t_N$; and (4) the block number and timestamp are updated for the next measurement cycle.
+
+Table~\ref{tab:performance} presents representative results. Block generation times ranged from 12 to 14 seconds per block, with one outlier of 114 seconds observed in Experiment 5, Block 1 (attributable to network congestion on the shared test network). Excluding this outlier, the total time to produce 12 blocks was consistently approximately 180 seconds. Figure~\ref{fig:performance} presents the corresponding bar plot visualization.
+
+\begin{table}[!ht]
+\caption{Block generation time (seconds) -- representative experiments.}\label{tab:performance}
+\begin{tabular*}{\columnwidth}{@{\extracolsep\fill}lccc@{}}
+\toprule
+Block & Exp. 1 & Exp. 5 & Exp. 10 \\
+\midrule
+1 & 14 & 114 & 12 \\
+2 & 12 & 14 & 14 \\
+3 & 14 & 12 & 12 \\
+4 & 12 & 14 & 14 \\
+5 & 14 & 12 & 12 \\
+6 & 12 & 14 & 14 \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Performance Bar Plot]\\Figure placeholder\vspace{2em}}}
+\caption{Block generation time across 10 experiments.}\label{fig:performance}
+\end{figure}
+
+The narrow range of 12--14 seconds per block demonstrates stable and predictable transaction confirmation times under the Proof of Authority (PoA) consensus algorithm employed by the Rinkeby network. PoA eliminates the computational resource expenditure associated with Proof of Work, yielding consistent block generation without the variability inherent in mining-based consensus.
+
+\subsection{Usability Evaluation}\label{subsec:usability}
+
+Usability was assessed using the Software Usability Measurement Inventory (SUMI), an internationally standardized psychometric instrument validated for software usability measurement. An academic license was obtained for this study. SUMI evaluates six scales: efficiency, affect, helpfulness, control, learnability, and global usability. The instrument's reliability and discriminant validity have been established through extensive factor analysis across diverse software systems.\cite{bevan1995measuring}
+
+\textbf{Participants.} Twenty-six evaluators were recruited from the Amhara Public Health Institute: 13 field epidemiologists, 7 public health workers, and 6 laboratory technicians. Participants received a brief introduction to the research topic and a general description of the prototype, then interacted with the system for 15--20 minutes before completing the SUMI questionnaire.
+
+\textbf{Results.} SUMI scales are standardized to a population mean of 50 with a standard deviation of 10 (50/10 distribution), on a scale ranging from 10 to 73. Figure~\ref{fig:sumi_summary} presents the statistical summary. The prototype achieved scores above the population mean on all six scales, with a maximum score of 68.96 and a minimum score of 60.46. Figure~\ref{fig:sumi_ci} presents the mean scores with 95\% confidence intervals (CIs), demonstrating that all scale CIs fall entirely above the 50-point population mean---indicating statistically significant above-average usability at the 95\% confidence level. Figure~\ref{fig:sumi_box} presents median boxplots with quartile distributions and whisker ranges.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[SUMI Statistical Summary]\\Figure placeholder\vspace{2em}}}
+\caption{SUMI evaluation statistical summary.}\label{fig:sumi_summary}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[SUMI Mean Scores with 95\% CIs]\\Figure placeholder\vspace{2em}}}
+\caption{SUMI mean scores with 95\% confidence intervals.}\label{fig:sumi_ci}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[SUMI Boxplots]\\Figure placeholder\vspace{2em}}}
+\caption{SUMI median boxplots with quartile distributions.}\label{fig:sumi_box}
+\end{figure}
+
+These results indicate that domain experts---epidemiologists, public health workers, and laboratory technicians---rated the prototype favorably across all usability dimensions, supporting the practical viability of blockchain-based surveillance interfaces for the target user population.
+
+\subsection{Security Evaluation}\label{subsec:security}
+
+Security was assessed through threat modeling and risk scenario analysis. The threat model defines the following components:
+
+\textbf{Assets.} The primary asset is infectious disease surveillance data---high-volume, multi-source data collected and analyzed across the public health hierarchy.
+
+\textbf{Threats.} Threats encompass scenarios in which surveillance data is exposed to unauthorized parties, altered without authorization, or prevented from reaching designated recipients.
+
+\textbf{Attack scenarios and mitigations.} Three attack types were analyzed:
+
+\textit{Man-in-the-Middle (MITM) Attack.} An adversary intercepts communication between model users to modify or corrupt surveillance data in transit. The proposed model mitigates MITM attacks through decentralized identity management and cryptographic hashing of all transmitted data. Each user relationship employs multi-factor authentication combining blockchain addresses and cryptographic keys distributed across participating nodes. If a user address is compromised, any fraudulent transaction will fail hash verification against the blockchain record, and the distributed architecture eliminates single-point-of-failure exploitation.
+
+\textit{Denial of Service (DoS) Attack.} An adversary overwhelms the system with false requests to disrupt surveillance operations. The model mitigates DoS attacks through two mechanisms: (1) the Ethereum network's tokenized transaction costs impose economic barriers on flood attacks, as each transaction requires expenditure of limited-supply tokens, making sustained flooding economically infeasible against the total consortium computing capacity; and (2) a data volume agreement protocol detects anomalous transmission volumes and triggers address replacement and stream reset upon agreement violation.
+
+\textit{Traffic Analysis Attack.} An adversary on a remote node sniffs surveillance data traffic to gain unauthorized access to report contents. The model mitigates this attack through public-key encryption of all surveillance data stored in smart contracts---data encrypted with the public key $k_{rp}$ can only be decrypted with the corresponding private key $k_{rs}$, rendering intercepted traffic unintelligible to unauthorized nodes.
+
+\textbf{Summary.} The threat model analysis demonstrates that the proposed blockchain-based architecture provides defense-in-depth against the three primary attack vectors relevant to disease surveillance systems, with mitigation mechanisms derived directly from blockchain's inherent properties of decentralization, immutability, and cryptographic security.
+
+%% ===== DISCUSSION =====
+\section{Discussion}\label{sec:discussion}
+
+The evaluation results validate the proposed blockchain-based DEWS model across three complementary dimensions, each addressing a specific subset of the limitations identified in Section~\ref{sec:introduction}.
+
+\textbf{Performance implications.} The observed block generation time of 12--14 seconds per block on the Rinkeby PoA network demonstrates that blockchain-based surveillance transactions can achieve near-real-time confirmation---well within the operational requirements of disease reporting workflows, where immediate-report conditions mandate notification within 30 minutes and weekly conditions require same-day submission. This performance compares favorably with the transaction delay limitations reported by Griggs et al.,\cite{griggs2018healthcare} whose IoT-focused blockchain system identified latency as a constraint on real-time effectiveness. The PoA consensus mechanism, by eliminating mining competition, provides predictable throughput suitable for institutional health information systems where validator identity is known and trusted.
+
+\textbf{Usability implications.} The SUMI evaluation demonstrates statistically significant above-average usability across all six scales (minimum score 60.46, maximum 68.96, population mean 50), indicating that domain professionals---epidemiologists, public health workers, and laboratory technicians---can effectively interact with blockchain-based surveillance interfaces. This finding is particularly significant given that blockchain technology introduces unfamiliar interaction patterns (wallet-based authentication, transaction confirmation) to users accustomed to conventional web applications. The results suggest that appropriate interface design can abstract blockchain complexity sufficiently for non-technical health professionals.
+
+\textbf{Security implications.} The threat model analysis demonstrates that the proposed architecture provides inherent defense against the three primary attack vectors (MITM, DoS, traffic analysis) through blockchain's native properties---decentralized identity management, tokenized transaction costs, and cryptographic data protection. Unlike the centralized architectures of Omar et al.\cite{omar2019privacy} and Quaini et al.,\cite{quaini2018model} which rely on perimeter security, the proposed model distributes trust across all participating nodes, eliminating single points of compromise. The multi-factor authentication combining blockchain addresses with distributed cryptographic keys provides stronger identity assurance than the certificate-based approaches vulnerable to MITM attacks in centralized systems.
+
+\textbf{Positioning against related work.} The proposed model addresses a gap not covered by prior blockchain-in-healthcare studies. Omar et al.\cite{omar2019privacy} and Zhang et al.\cite{zhang2018fhirchain} targeted patient records and clinical data sharing respectively but did not address multi-tier hierarchical reporting workflows. Griggs et al.\cite{griggs2018healthcare} focused narrowly on medical IoT security without implementing surveillance business logic. The ML-based surveillance approaches of Bollig et al.,\cite{bollig2020machine} Harvey et al.,\cite{harvey2021predicting} and Rubio-Solis et al.\cite{rubiosolis2019zika} provide predictive analytics but cannot guarantee data integrity, decentralization, or auditability---properties that the proposed blockchain model inherently provides. The present work is, to the best of available knowledge, the first to combine blockchain smart contract architecture with the complete DEWS workflow including hierarchical reporting, laboratory integration, automated completeness verification, and multi-dimensional epidemiological analysis.
+
+\textbf{Limitations.} Several limitations constrain the generalizability of the findings. First, the prototype was deployed on the Rinkeby test network rather than the Ethereum mainnet, and test network conditions may not fully replicate production performance characteristics. Second, the usability evaluation sample ($n=26$) was drawn from a single regional institute; broader multi-site evaluation would strengthen external validity. Third, the blockchain suitability survey ($n=10$) employed purposive sampling from one institution, limiting the representativeness of stakeholder perspectives. Fourth, the security evaluation relies on theoretical threat modeling rather than penetration testing against the deployed prototype. Fifth, scalability under high transaction volumes (multiple regions reporting simultaneously) was not empirically assessed.
+
+%% ===== CONCLUSION =====
+\section{Conclusion and Future Work}\label{sec:conclusion}
+
+This paper presented a blockchain-based architectural model for disease early warning and surveillance, implemented as a functional prototype on the Ethereum platform. The model integrates four core surveillance processes---hierarchical disease case reporting, laboratory result reporting, automated report completeness verification, and multi-dimensional epidemiological data analysis---within a decentralized, immutable, and traceable smart contract architecture.
+
+The three-dimensional evaluation validated the model against operational requirements. Performance evaluation demonstrated stable block generation times of 12--14 seconds under Proof of Authority consensus, satisfying the temporal requirements of surveillance reporting workflows. Usability evaluation via the standardized SUMI instrument ($n=26$ domain professionals) yielded scores of 60.46--68.96 across all six scales, significantly exceeding the population mean and confirming practical usability for epidemiologists, public health workers, and laboratory technicians. Security evaluation through threat modeling demonstrated inherent resistance to man-in-the-middle, denial-of-service, and traffic analysis attacks through blockchain's native cryptographic and decentralization properties.
+
+The proposed model addresses the identified limitations of existing disease surveillance systems---data centralization, security vulnerabilities, traceability gaps, manual completeness verification, and inter-organizational interoperability barriers---through the systematic application of distributed ledger technology to the public health domain.
+
+Future research directions include:
+\begin{itemize}
+\item Extension of the model to encompass public health emergency response and recovery processes downstream of surveillance.
+\item Implementation of incidence proportion and prevalence rate computation functions within the smart contract architecture.
+\item Upgrade of the prototype from test network deployment to a production-grade operational system.
+\item Evaluation of alternative blockchain platforms beyond the three compared in this study.
+\item Integration of machine learning and artificial intelligence modules with the blockchain architecture for predictive surveillance capabilities.
+\item Development of a cross-platform mobile application to improve field accessibility.
+\item Comparative evaluation against similar blockchain-based health information systems.
+\end{itemize}
+
+%% ===== BACK MATTER =====
+
+\section*{Author Contributions}
+\textbf{Teklhiwot Mekonen:} Conceptualization; Methodology; Software; Validation; Formal analysis; Investigation; Data curation; Writing -- original draft; Visualization.
+
+\textbf{Esubalew Alemneh:} Supervision; Writing -- review \& editing.
+
+\section*{Acknowledgments}
+The authors thank the staff of the Amhara Public Health Institute for their participation in the blockchain suitability assessment survey and the SUMI usability evaluation. The authors also acknowledge the Human Computer Interaction Research Group (HCIRG), University College Cork, Ireland, for provision of the SUMI academic license.
+
+\section*{Financial Disclosure}
+This research was conducted as part of a Master of Science thesis at Bahir Dar University, Bahir Dar Institute of Technology, Faculty of Computing. No specific external grant from any funding agency in the public, commercial, or not-for-profit sectors was received for this research.
+
+\section*{Conflict of Interest}
+The authors declare no conflicts of interest.
+
+\section*{Data Availability Statement}
+The smart contract source code for the prototype is available in the repository accompanying this manuscript. The SUMI questionnaire instrument is proprietary and available under academic license from the Human Computer Interaction Research Group, University College Cork, Ireland. Raw SUMI response data are not publicly available due to participant confidentiality but are available from the corresponding author upon reasonable request.
+
+\section*{Ethics Statement}
+This study involved a usability evaluation with 26 human participants (13 field epidemiologists, 7 public health workers, and 6 laboratory technicians) recruited from the Amhara Public Health Institute, Bahir Dar, Ethiopia. Participants were briefed on the research objectives and provided voluntary agreement to participate. The study involved interaction with a software prototype for 15--20 minutes followed by completion of the standardized Software Usability Measurement Inventory (SUMI) questionnaire. The study posed no more than minimal risk to participants: no personal health data were collected, no clinical interventions were performed, and all questionnaire responses were anonymous.
+
+\bibliography{references}
+
+\end{document}
