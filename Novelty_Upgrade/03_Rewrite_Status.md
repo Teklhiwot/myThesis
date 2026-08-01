@@ -1,6 +1,6 @@
 # 03 Rewrite Status
 
-- [ ] Abstract
+- [x] Abstract
 - [ ] Introduction
 - [ ] Related Work
 - [ ] Methodology
