@@ -4,7 +4,7 @@
 - [x] Introduction
 - [x] Related Work
 - [x] Methodology
-- [ ] Proposed Architecture
+- [x] Proposed Architecture
 - [ ] Prototype Implementation
 - [ ] Evaluation
 - [ ] Discussion

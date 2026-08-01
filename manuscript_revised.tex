@@ -198,117 +198,150 @@ An average of 82.85\% affirmative responses exceeded the framework's majority th
 The study scope encompasses the design, prototyping, and evaluation of the smart-contract coordination layer within the hybrid architecture. The following methodological boundaries apply: (1)~the prototype validates coordination-layer feasibility on Ethereum but does not implement the complete off-chain storage, edge/fog, or Layer-2 components, which are specified architecturally; (2)~performance evaluation uses the Rinkeby test network, not mainnet deployment; (3)~suitability survey participants are drawn from a single regional institute (n=10), limiting generalizability of stakeholder findings; and (4)~the expanded threat model is analytically derived rather than empirically penetration-tested. These constraints bound the current empirical claims while preserving the architectural contribution, which is designed to be transferable across LMIC surveillance contexts.
 
 %% ===== PROPOSED MODEL =====
-\section{Proposed Blockchain-Based Model for Disease Early Warning and Surveillance}\label{sec:model}
+\section{Proposed Hybrid Blockchain Architecture for Disease Early Warning and Surveillance}\label{sec:model}
 
-The proposed model integrates Ethereum blockchain technology with the infectious disease early warning and surveillance (DEWS) workflow to address the limitations of centralized reporting systems---namely, data integrity vulnerabilities, traceability gaps, single-point-of-failure risks, and the absence of automated completeness enforcement. The architecture leverages Ethereum smart contracts to automate and secure four core surveillance processes: (1) hierarchical disease case reporting, (2) laboratory result reporting, (3) report completeness verification, and (4) epidemiological data analysis. Figure~\ref{fig:architecture} presents the overall architectural model.
+This section presents a hybrid, privacy-layered, hierarchical architecture for infectious disease early warning and surveillance (DEWS) in low- and middle-income country (LMIC) settings. The architecture replaces monolithic on-chain storage with \emph{selective anchoring}: encrypted surveillance payloads reside off-chain while the Ethereum blockchain retains only cryptographic hashes, access-control state, provenance records, alerts, and audit events. This separation addresses four categories of shortcoming in first-generation blockchain-health systems: unsustainable storage replication, narrow immutability-only privacy, unargued consensus assumptions, and resource-uniform participation models that exclude constrained facilities.
 
-\begin{figure}[!ht]
-\centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Overall Architectural Model]\\Figure placeholder\vspace{2em}}}
-\caption{Blockchain-based architectural model for disease early warning and surveillance.}\label{fig:architecture}
-\end{figure}
+\subsection{Multi-Tier Architectural Topology}\label{subsec:topology}
 
-The model operates on a distributed Ethereum network in which each participating node maintains a complete copy of the blockchain ledger. Health facilities and laboratories interact with deployed smart contracts through standard Ethereum client interfaces, ensuring that all surveillance transactions are recorded immutably, transparently, and traceably across organizational boundaries. The smart contract mechanism for the DEWS domain is illustrated in Figure~\ref{fig:smartcontract}: contracts are written in Solidity, compiled into EVM bytecode, and deployed to the network where they govern the business logic of each surveillance task. End users interact with the blockchain through browser-based wallet extensions, while the application layer communicates with the network via the Web3.js library (Figure~\ref{fig:web3}).
+The architecture organizes participants into five functionally distinct tiers aligned with the Ethiopian public health administrative hierarchy. Figure~\ref{fig:architecture} illustrates the overall topology.
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Smart Contract Mechanism]\\Figure placeholder\vspace{2em}}}
-\caption{Smart contract mechanism for the DEWS domain.}\label{fig:smartcontract}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Multi-Tier Architectural Topology]\\Figure placeholder\vspace{2em}}}
+\caption{Hybrid blockchain architecture for disease early warning and surveillance showing five processing tiers.}\label{fig:architecture}
 \end{figure}
+
+\textbf{Tier~1: Community and Peripheral Capture Layer.} Community health workers and primary health posts originate surveillance events. These nodes operate as lightweight clients---they encrypt case data locally and submit payloads to off-chain storage without running validator infrastructure. This tier accommodates intermittent connectivity, underpowered devices, and limited staff capacity characteristic of LMIC peripheral sites.
+
+\textbf{Tier~2: Edge/Fog Processing Layer.} Near-source processing nodes perform preliminary validation, data formatting, local buffering during connectivity interruptions, and transaction batching. This layer reduces bandwidth demands and latency for constrained facilities while ensuring that submissions conform to schema requirements before propagation.
+
+\textbf{Tier~3: District/Regional Coordination Layer.} Woreda, zone, and regional health offices serve as intermediate trust and aggregation nodes. These facilities batch validated submissions from subordinate tiers, perform supervisory review, and prepare aggregate transaction sets for blockchain anchoring. The coordination layer mirrors the existing public health reporting hierarchy, enabling bidirectional information flow---upward for case reporting and downward for supervisory feedback.
+
+\textbf{Tier~4: Blockchain Coordination Layer.} Ethereum smart contracts provide the system's coordination, enforcement, provenance, and auditability functions. On-chain data is strictly limited to: cryptographic hashes of off-chain payloads, content-addressable pointers, permission and access-control state, consent and provenance records, alert events, and audit trail entries. Raw surveillance payloads are never stored on-chain.
+
+\textbf{Tier~5: Off-Chain Encrypted Data Layer.} Bulk surveillance records---case reports, laboratory results, specimen metadata---reside in encrypted off-chain storage using IPFS content addressing. Each stored object is linked to its on-chain hash anchor, enabling integrity verification without ledger replication of sensitive health data.
+
+\subsection{Selective Anchoring and Core Data Flow}\label{subsec:dataflow}
+
+The selective anchoring principle governs all data movement through the architecture. The end-to-end workflow proceeds as follows (Figure~\ref{fig:smartcontract}):
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Web3.js Application Layer]\\Figure placeholder\vspace{2em}}}
-\caption{Application layer communication via Web3.js.}\label{fig:web3}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Selective Anchoring Data Flow]\\Figure placeholder\vspace{2em}}}
+\caption{Selective anchoring workflow showing separation of encrypted off-chain storage from on-chain coordination artifacts.}\label{fig:smartcontract}
 \end{figure}
+
+\begin{enumerate}
+\item A reporting actor at Tier~1 creates a surveillance event (case report, laboratory result, or completeness submission).
+\item The payload is encrypted using the actor's cryptographic credentials before leaving the originating node.
+\item The encrypted payload is stored off-chain via IPFS, yielding a content-addressed hash.
+\item The hash, a storage pointer, permission metadata, and relevant audit information are prepared for blockchain anchoring.
+\item Edge/fog nodes (Tier~2) or district/regional coordinators (Tier~3) preprocess, validate, and batch submissions.
+\item Smart contracts at Tier~4 commit only the selective on-chain artifacts---hash, permissions, provenance, and alert state.
+\item Authorized parties verify data integrity, provenance, and access status through on-chain proofs and permission logic, retrieving encrypted payloads from off-chain storage only when access is granted.
+\item Alert events and audit records are preserved on-chain as immutable traceability artifacts.
+\end{enumerate}
+
+This workflow eliminates full ledger replication of surveillance data, reduces gas costs and storage growth, and ensures that bulk health records are never directly exposed on the distributed ledger.
 
 \subsection{Hierarchical Disease Reporting}\label{subsec:reporting}
 
-The disease reporting component implements the five-tier hierarchical structure of Ethiopia's public health surveillance system: community health posts, woreda health offices, zone health offices, regional health offices, and the Ethiopian Health and Nutrition Research Institute/Public Health Emergency Management (EHNRI/PHEM) center.
+The disease reporting component implements Ethiopia's five-tier public health surveillance hierarchy: community health posts, woreda health offices, zone health offices, regional health offices, and the EHNRI/PHEM national center.
 
-The contract architecture employs a factory pattern. A dedicated report generator contract is deployed first and serves as the factory responsible for instantiating and managing individual report contracts for each health organization. Upon deployment, each organizational level gains the capability to write surveillance reports as blockchain transactions. The hierarchical access control model enforces the following constraints: health offices at higher levels can retrieve and review reports generated by subordinate organizations, and can submit feedback or request rework through the same contract interface. Subordinate levels cannot access peer-level or superior-level reports unless explicitly authorized.
+The revised architecture separates the reporting workflow into four functional phases:
 
-This design ensures bidirectional information flow---upward for case reporting and downward for supervisory feedback---while maintaining an immutable, timestamped audit trail of every transaction. Each report submission, review action, and feedback message constitutes a permanent blockchain record that cannot be altered retroactively. Figure~\ref{fig:reporting} illustrates the disease reporting process design.
+\textbf{Capture phase.} Community and facility reporters (Tier~1) encrypt case data and submit encrypted payloads to IPFS. Each submission generates a content hash and metadata record. Reporters operate as lightweight clients with no blockchain validation responsibilities.
+
+\textbf{Aggregation phase.} Edge/fog nodes (Tier~2) buffer, validate, and batch submissions from multiple reporters. District and regional coordinators (Tier~3) aggregate validated batches and perform hierarchical completeness checks before anchoring.
+
+\textbf{Coordination phase.} Smart contracts at Tier~4 receive batch anchoring transactions containing hashes, permission grants, and provenance records. A factory contract instantiates and manages organizational report-tracking contracts. Access control enforces hierarchical constraints: higher-level offices can retrieve and review reports from subordinate organizations; subordinate levels cannot access peer-level or superior-level reports unless explicitly authorized through on-chain permission grants.
+
+\textbf{Audit phase.} Every report submission, review action, feedback message, and permission change constitutes a permanent on-chain audit record. Supervisory feedback flows downward through the same contract interface, maintaining bidirectional traceability without storing report content on the ledger.
+
+Figure~\ref{fig:reporting} illustrates the redesigned reporting process.
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Disease Reporting Process]\\Figure placeholder\vspace{2em}}}
-\caption{Disease reporting process design.}\label{fig:reporting}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Hierarchical Disease Reporting Process]\\Figure placeholder\vspace{2em}}}
+\caption{Hierarchical disease reporting process with selective anchoring and role-asymmetric participation.}\label{fig:reporting}
 \end{figure}
 
 \subsection{Laboratory Network Integration}\label{subsec:laboratory}
 
-The laboratory reporting component addresses rapid pathogen identification and efficient information exchange across the four-tiered laboratory network: woreda, zone, regional, and national levels. Each laboratory is assigned a dedicated smart contract upon deployment, mirroring the organizational structure.
+The laboratory component addresses pathogen identification and result exchange across the four-tiered laboratory network: woreda, zone, regional, and national reference levels.
 
-Laboratory contracts support hierarchical interaction with bidirectional transaction flows. Forward (upward) reporting transmits identification results, specimen metadata, and pathogen characterization data to higher-level laboratory facilities for confirmation or further analysis. Backward (downward) communication enables feedback dissemination, result confirmation, and follow-up information sharing from reference laboratories to originating facilities. This bidirectional flow ensures that pathogen identification results propagate through the laboratory network without information loss or unauthorized modification. Figure~\ref{fig:laboratory} depicts the laboratory network design.
+Under the hybrid architecture, laboratory results and specimen metadata are encrypted and stored off-chain. On-chain contracts manage only provenance records, result-confirmation events, and access permissions. Forward (upward) reporting transmits hash-anchored identification results to higher-level facilities for confirmation. Backward (downward) communication enables reference laboratories to disseminate confirmations, corrections, and follow-up information through permission-controlled off-chain retrieval with on-chain audit logging.
+
+Selective disclosure ensures that specimen-level data is accessible only to authorized laboratory tiers. Dynamic access grants allow temporary cross-tier visibility during outbreak investigations, with automatic expiry preventing persistent overbroad access. Figure~\ref{fig:laboratory} depicts the laboratory network design.
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Laboratory Network Design]\\Figure placeholder\vspace{2em}}}
-\caption{Laboratory network reporting design.}\label{fig:laboratory}
+\caption{Laboratory network integration with off-chain encrypted storage and on-chain provenance anchoring.}\label{fig:laboratory}
+\end{figure}
+
+\subsection{Layered Privacy Architecture}\label{subsec:privacy}
+
+The privacy model replaces immutability-only protection with three complementary mechanisms:
+
+\textbf{Encrypted off-chain storage.} All surveillance payloads are encrypted before storage, ensuring that compromise of the storage layer alone does not expose case-level data.
+
+\textbf{Dynamic access control.} Smart contracts implement fine-grained permission management with grant, revoke, and time-bound expire semantics. Access rights are scoped to specific organizational tiers and reporting relationships, preventing overbroad cross-tier exposure. Permission state changes are recorded on-chain for auditability.
+
+\textbf{Zero-knowledge verification.} Privacy-preserving validation enables authorized parties to verify properties of surveillance submissions---such as completeness, timeliness, or demographic eligibility---without accessing underlying sensitive records. Zero-knowledge proofs support selective disclosure during cross-organizational coordination and outbreak response while minimizing data exposure.
+
+Figure~\ref{fig:web3} illustrates the layered privacy control architecture.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Layered Privacy Architecture]\\Figure placeholder\vspace{2em}}}
+\caption{Layered privacy architecture: encrypted storage, dynamic access control, and zero-knowledge verification.}\label{fig:web3}
 \end{figure}
 
 \subsection{Report Completeness Verification}\label{subsec:completeness}
 
-Timely and complete reporting constitutes a fundamental requirement for effective disease surveillance. The Ethiopian DEWS protocol mandates weekly reporting, and a report is classified as complete when all reporting units within a designated catchment area have submitted their data within the prescribed reporting period.
+The Ethiopian DEWS protocol mandates weekly reporting; a report is classified as complete when all reporting units within a designated catchment area have submitted within the prescribed period.
 
-To enforce this requirement programmatically, every smart contract at each hierarchical level incorporates a report completeness calculator function. This function queries the ledger to verify whether all subordinate reporting units have generated their surveillance reports on schedule. The function returns a completeness ratio computed as the number of reports received divided by the total number of expected reports for the given period and catchment area. This mechanism automates a task currently performed through manual cross-referencing of paper-based submissions, eliminating human error in completeness assessment and providing real-time visibility into reporting gaps. Figure~\ref{fig:completeness} illustrates the completeness verification design.
+Under the hybrid architecture, completeness verification operates on anchored events rather than full ledger queries. Smart contracts at each hierarchical level maintain a registry of expected reporters and track submission-anchor events. The completeness calculator function computes the ratio of received anchoring events to expected submissions for a given period and catchment area. Because only hashes and metadata are queried---not full surveillance payloads---the verification mechanism scales efficiently without requiring ledger-wide data replication.
+
+Edge/fog nodes assist completeness tracking by maintaining local submission registries and alerting coordinators to missing reports before the reporting deadline, enabling proactive gap identification. Figure~\ref{fig:completeness} illustrates the event-driven completeness verification design.
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Completeness Verification]\\Figure placeholder\vspace{2em}}}
-\caption{Report completeness verification design.}\label{fig:completeness}
+\caption{Event-driven report completeness verification using anchored submission events.}\label{fig:completeness}
 \end{figure}
 
 \subsection{Surveillance Data Analysis}\label{subsec:analysis}
 
-The data analysis component implements three epidemiological analysis dimensions derived from standard public health surveillance methodology:
+The data analysis component implements three epidemiological dimensions: temporal (day, week, month), spatial (kebele, woreda, town), and person-based (age, sex, occupation) analysis for outbreak detection and disease burden assessment.
 
-\textbf{Analysis by time.} Temporal variables (day, week, month) are extracted from reported case data to quantify changes in case counts and mortality rates over defined periods. Temporal trend analysis enables detection of anomalous increases that may signal outbreak onset. Figure~\ref{fig:temporal} presents the temporal analysis design.
+Under the revised architecture, analytics are separated from ledger settlement. Computationally intensive epidemiological analysis---including incidence proportion and prevalence calculations---executes at the district/regional coordination layer (Tier~3) over decrypted off-chain data accessible through permission-controlled retrieval. Only summary indicators, alert triggers, and anomaly flags are anchored on-chain as audit-worthy events.
 
-\begin{figure}[!ht]
-\centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Temporal Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Temporal analysis design.}\label{fig:temporal}
-\end{figure}
+This placement ensures that: (1) analysis operates on complete decrypted datasets rather than on-chain transaction data; (2) privacy-preserving aggregation can be applied before results cross organizational boundaries; (3) constrained peripheral nodes are not burdened with analytical computation; and (4) early warning alerts inherit the integrity guarantees of blockchain anchoring without requiring raw case data on the ledger.
 
-\textbf{Analysis by place.} Geospatial variables (kebele, woreda, town) are extracted to support areal infection spread analysis across administrative boundaries at multiple hierarchical levels. Spatial analysis identifies geographic clustering of cases and tracks the directionality of disease spread. Figure~\ref{fig:spatial} presents the spatial analysis design.
+\textbf{Morbidity measures.} Incidence proportion (new cases relative to the at-risk population) and prevalence (existing cases at a point or period) are computed at Tier~3 coordination nodes.\cite{cdc2012principles} Results are anchored on-chain as verifiable indicator events, supporting outbreak detection decisions grounded in tamper-evident, provenance-tracked epidemiological evidence.
 
-\begin{figure}[!ht]
-\centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Spatial Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Spatial analysis design.}\label{fig:spatial}
-\end{figure}
+\subsection{Consensus Design and Validator Governance}\label{subsec:consensus}
 
-\textbf{Analysis by person.} Demographic variables (age, sex, ethnicity, occupation) are extracted from reported data to compare the total number and proportion of suspected and confirmed cases for a given infection. A dedicated smart contract function at each reporting level executes these comparative computations, enabling identification of disproportionately affected population subgroups. Figure~\ref{fig:person} presents the person-based analysis design.
+The architecture requires explicit consensus-selection rationale rather than default adoption of Proof of Authority (PoA). The consensus design addresses three dimensions:
 
-\begin{figure}[!ht]
-\centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Person-Based Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Person-based analysis design.}\label{fig:person}
-\end{figure}
+\textbf{Comparative evaluation.} PoA, Delegated Proof of Stake (DPoS), PBFT variants, and Raft-based alliance models are evaluated against: (1) the hierarchical trust topology of the Ethiopian health system, (2) LMIC infrastructure constraints including latency and node capacity, (3) transaction throughput requirements for batched surveillance submissions, and (4) fault tolerance under realistic connectivity assumptions.
 
-\subsubsection{Morbidity Measures}\label{subsubsec:morbidity}
+\textbf{Validator appointment.} Validators are drawn from institutional actors at Tier~3 and above---district, regional, and national health authorities with stable infrastructure and institutional accountability. Community and peripheral facilities are explicitly excluded from validator responsibilities, consistent with the resource-aware role separation principle.
 
-Two standard epidemiological measures are computed within the analysis framework to support early warning decision-making:
+\textbf{Governance and resilience.} The architecture specifies collusion thresholds, failure assumptions, and trust concentration bounds. Validator appointment follows institutional authority rather than computational capacity, and governance procedures for validator addition, removal, and dispute resolution are defined to prevent capture by any single administrative tier.
 
-\textit{Incidence proportion} quantifies the fraction of an initially disease-free population that develops disease within a specified time period, encompassing all new cases relative to the total at-risk population.\cite{cdc2012principles} This measure supports detection of emerging outbreaks by tracking the rate at which new cases appear. Figure~\ref{fig:incidence} illustrates the incidence analysis workflow.
+\subsection{Scalability Extensions}\label{subsec:scalability}
 
-\begin{figure}[!ht]
-\centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Incidence Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Incidence proportion analysis workflow.}\label{fig:incidence}
-\end{figure}
+The architecture supports three composable scalability mechanisms as design modules:
 
-\textit{Prevalence} quantifies the proportion of persons in a population who have a particular disease at a specified point in time or over a defined period, encompassing both new and pre-existing cases.\cite{cdc2012principles} Prevalence tracking provides a measure of overall disease burden within a surveillance catchment. Figure~\ref{fig:prevalence} illustrates the prevalence analysis workflow.
+\textbf{Layer-2 batch settlement.} District/regional coordinators aggregate validated submissions off-chain and submit batch proofs or commitments to Layer-1, reducing main-chain transaction frequency and gas costs proportionally to batch size.
 
-\begin{figure}[!ht]
-\centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Prevalence Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Prevalence analysis workflow.}\label{fig:prevalence}
-\end{figure}
+\textbf{Hierarchical state partitioning.} Surveillance state is partitioned by administrative geography, allowing regional subsets of the anchoring ledger to operate semi-independently while maintaining cross-partition integrity verification at the national level.
 
-The integration of these epidemiological measures within the blockchain-based architecture ensures that morbidity computations are performed on verified, tamper-proof data, and that the resulting early warning indicators inherit the integrity guarantees of the underlying distributed ledger.
+\textbf{FHIR-aware interoperability.} Privacy workflows are designed for compatibility with Fast Healthcare Interoperability Resources (FHIR) standards, enabling selective disclosure across organizational boundaries while maintaining standards-compliant data exchange and audit semantics.
 
 %% ===== PROTOTYPE IMPLEMENTATION =====
 \section{Prototype Implementation}\label{sec:implementation}
