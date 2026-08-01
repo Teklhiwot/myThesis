@@ -190,22 +190,160 @@ The proposed model integrates Ethereum blockchain technology with the infectious
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Overall Architectural Model]\\Figure placeholder\vspace{2em}}}
-\caption{Blockchain-based architectural model for disease early warning and surveillance.}\label{fig:architecture}
+\caption{Hybrid privacy-layered architecture for blockchain-based disease early warning and surveillance. The five-tier topology separates community capture, edge/fog preprocessing, district coordination, blockchain selective anchoring, and encrypted off-chain storage. Arrows denote data flow direction; dashed lines indicate hash/pointer anchoring rather than payload transfer.}\label{fig:architecture}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Overall Architectural Model
+% Scientific purpose: Provides a single high-level view of the five-tier hybrid architecture,
+% showing how surveillance data flows from community capture through edge preprocessing
+% and district batching to selective blockchain anchoring with off-chain encrypted storage.
+%
+% graph TB
+%     subgraph T1["Tier 1 · Community / Peripheral Capture"]
+%         CHW["Community Health Workers"]
+%         HF["Health Facilities"]
+%     end
+%
+%     subgraph T2["Tier 2 · Edge / Fog Processing"]
+%         EFN["Edge/Fog Nodes"]
+%         VAL["Preliminary Validation"]
+%         BUF["Local Buffering & Batching"]
+%     end
+%
+%     subgraph T3["Tier 3 · District / Regional Coordination"]
+%         DC["District Coordinator"]
+%         BA["Batch Aggregation"]
+%         SV["Supervisory Validation"]
+%     end
+%
+%     subgraph T4["Tier 4 · Blockchain Coordination"]
+%         SC["Smart Contracts"]
+%         HA["Hash Anchoring"]
+%         ACL["Access Control & Permissions"]
+%         AU["Audit & Provenance Trails"]
+%         AL["Alert Events"]
+%     end
+%
+%     subgraph T5["Tier 5 · Off-Chain Data Layer"]
+%         IPFS["IPFS / Encrypted Storage"]
+%         ENC["AES-256 Encrypted Payloads"]
+%     end
+%
+%     CHW -->|"encrypted event"| EFN
+%     HF -->|"encrypted event"| EFN
+%     EFN --> VAL
+%     VAL --> BUF
+%     BUF -->|"validated batch"| DC
+%     DC --> BA
+%     DC --> SV
+%     BA -->|"batch tx"| SC
+%     SC --> HA
+%     SC --> ACL
+%     SC --> AU
+%     SC --> AL
+%     EFN -.->|"encrypted payload"| IPFS
+%     DC -.->|"encrypted payload"| IPFS
+%     IPFS --- ENC
+%     HA -.->|"hash/pointer"| IPFS
+%
+%     style T1 fill:#f5f5f5,stroke:#333
+%     style T2 fill:#e8e8e8,stroke:#333
+%     style T3 fill:#dcdcdc,stroke:#333
+%     style T4 fill:#d0d0d0,stroke:#333
+%     style T5 fill:#c4c4c4,stroke:#333
+% ==========================
 
 The model operates on a distributed Ethereum network in which each participating node maintains a complete copy of the blockchain ledger. Health facilities and laboratories interact with deployed smart contracts through standard Ethereum client interfaces, ensuring that all surveillance transactions are recorded immutably, transparently, and traceably across organizational boundaries. The smart contract mechanism for the DEWS domain is illustrated in Figure~\ref{fig:smartcontract}: contracts are written in Solidity, compiled into EVM bytecode, and deployed to the network where they govern the business logic of each surveillance task. End users interact with the blockchain through browser-based wallet extensions, while the application layer communicates with the network via the Web3.js library (Figure~\ref{fig:web3}).
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Smart Contract Mechanism]\\Figure placeholder\vspace{2em}}}
-\caption{Smart contract mechanism for the DEWS domain.}\label{fig:smartcontract}
+\caption{Smart contract selective-anchoring mechanism. Contracts receive batch commitments from district coordinators and record only hashes, permission states, alerts, and audit events on-chain. Raw surveillance payloads are never committed to the ledger.}\label{fig:smartcontract}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Smart Contract Selective-Anchoring Mechanism
+% Scientific purpose: Illustrates the internal logic of the smart contract layer,
+% showing which artifacts are anchored on-chain (hashes, permissions, alerts, audit)
+% versus which remain off-chain (encrypted payloads), enforcing the selective-anchoring principle.
+%
+% flowchart LR
+%     subgraph Input["Incoming Batch from District"]
+%         BT["Batch Transaction"]
+%         HP["Hash + Pointer"]
+%         PM["Permission Metadata"]
+%     end
+%
+%     subgraph SC["Smart Contract Logic"]
+%         VER["Verify Batch Integrity"]
+%         ANC["Anchor Hash On-Chain"]
+%         PERM["Update ACL State"]
+%         ALERT["Evaluate Alert Rules"]
+%         AUDIT["Write Audit Event"]
+%     end
+%
+%     subgraph OnChain["On-Chain State"]
+%         H["Hashes & Pointers"]
+%         P["Permissions & Consent"]
+%         A["Alert Records"]
+%         T["Audit Trail"]
+%     end
+%
+%     subgraph OffChain["Off-Chain"]
+%         IPFS["Encrypted Payloads · IPFS"]
+%     end
+%
+%     BT --> VER
+%     HP --> VER
+%     PM --> VER
+%     VER --> ANC
+%     VER --> PERM
+%     VER --> ALERT
+%     VER --> AUDIT
+%     ANC --> H
+%     PERM --> P
+%     ALERT --> A
+%     AUDIT --> T
+%     H -.->|"pointer reference"| IPFS
+%
+%     style OnChain fill:#e8e8e8,stroke:#333
+%     style OffChain fill:#f5f5f5,stroke:#333,stroke-dasharray:5 5
+% ==========================
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Web3.js Application Layer]\\Figure placeholder\vspace{2em}}}
-\caption{Application layer communication via Web3.js.}\label{fig:web3}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Core Data Flow]\\Figure placeholder\vspace{2em}}}
+\caption{End-to-end data flow from event origination through encryption, off-chain storage, hash anchoring, and authorized retrieval. Solid arrows represent payload movement; dashed arrows represent hash/pointer references.}\label{fig:web3}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Core Data Flow
+% Scientific purpose: Replaces the original Web3.js-centric figure with a complete
+% end-to-end data flow diagram showing encryption-first design, off-chain storage,
+% selective anchoring, and authorized retrieval—the central data lifecycle of the
+% revised architecture.
+%
+% sequenceDiagram
+%     participant RA as Reporting Actor
+%     participant EF as Edge/Fog Node
+%     participant DC as District Coordinator
+%     participant OC as Off-Chain Store (IPFS)
+%     participant BC as Blockchain (Smart Contract)
+%     participant AU as Authorized Verifier
+%
+%     RA->>EF: Submit encrypted surveillance event
+%     EF->>EF: Validate, format, buffer
+%     EF->>OC: Store encrypted payload
+%     OC-->>EF: Return content-address (CID)
+%     EF->>DC: Forward validated event + CID
+%     DC->>DC: Batch and aggregate
+%     DC->>BC: Anchor batch (hashes, CIDs, permissions)
+%     BC-->>DC: Confirm anchoring tx
+%     Note over BC: On-chain: hash, pointer, ACL, audit
+%     AU->>BC: Request access + verify provenance
+%     BC-->>AU: Return CID + permission token
+%     AU->>OC: Retrieve encrypted payload by CID
+%     OC-->>AU: Return encrypted payload
+%     AU->>AU: Decrypt with authorized key
+% ==========================
 
 \subsection{Hierarchical Disease Reporting}\label{subsec:reporting}
 
@@ -218,8 +356,46 @@ This design ensures bidirectional information flow---upward for case reporting a
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Disease Reporting Process]\\Figure placeholder\vspace{2em}}}
-\caption{Disease reporting process design.}\label{fig:reporting}
+\caption{Hierarchical disease reporting with privacy-layered data handling. Reports flow upward through the five-tier public health hierarchy; supervisory feedback flows downward. Encrypted payloads are stored off-chain; only hashes and audit events are anchored on the blockchain.}\label{fig:reporting}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Hierarchical Disease Reporting Process
+% Scientific purpose: Shows the five-tier Ethiopian public health reporting hierarchy
+% with the revised data handling: encrypted off-chain storage at each tier,
+% selective hash anchoring, and bidirectional flow (upward reports, downward feedback).
+%
+% graph TB
+%     CHP["Community Health Post"]
+%     WHO["Woreda Health Office"]
+%     ZHO["Zone Health Office"]
+%     RHO["Regional Health Office"]
+%     EHNRI["EHNRI/PHEM Center"]
+%     OC["Off-Chain Encrypted Store"]
+%     BC["Blockchain · Hash Anchor"]
+%
+%     CHP -->|"encrypted report ↑"| WHO
+%     WHO -->|"aggregated batch ↑"| ZHO
+%     ZHO -->|"aggregated batch ↑"| RHO
+%     RHO -->|"aggregated batch ↑"| EHNRI
+%
+%     EHNRI -.->|"feedback ↓"| RHO
+%     RHO -.->|"feedback ↓"| ZHO
+%     ZHO -.->|"feedback ↓"| WHO
+%     WHO -.->|"feedback ↓"| CHP
+%
+%     CHP -->|"payload"| OC
+%     WHO -->|"payload"| OC
+%     ZHO -->|"payload"| OC
+%     RHO -->|"payload"| OC
+%
+%     WHO -->|"hash + audit"| BC
+%     ZHO -->|"hash + audit"| BC
+%     RHO -->|"hash + audit"| BC
+%     EHNRI -->|"hash + audit"| BC
+%
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+%     style BC fill:#d0d0d0,stroke:#333
+% ==========================
 
 \subsection{Laboratory Network Integration}\label{subsec:laboratory}
 
@@ -230,8 +406,41 @@ Laboratory contracts support hierarchical interaction with bidirectional transac
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Laboratory Network Design]\\Figure placeholder\vspace{2em}}}
-\caption{Laboratory network reporting design.}\label{fig:laboratory}
+\caption{Laboratory network reporting with off-chain integration. Bidirectional flows carry encrypted specimen data upward and confirmation results downward across four laboratory tiers. Hash anchors on-chain preserve provenance without exposing pathogen records.}\label{fig:laboratory}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Laboratory Network Reporting Design
+% Scientific purpose: Depicts the four-tier laboratory network with encrypted off-chain
+% specimen storage and blockchain hash anchoring, showing bidirectional flow for
+% specimen submission (upward) and result confirmation (downward).
+%
+% graph TB
+%     WL["Woreda Laboratory"]
+%     ZL["Zone Laboratory"]
+%     RL["Regional Laboratory"]
+%     NL["National Reference Lab"]
+%     OC["Off-Chain Encrypted Store"]
+%     BC["Blockchain · Provenance Anchor"]
+%
+%     WL -->|"encrypted specimen data ↑"| ZL
+%     ZL -->|"encrypted specimen data ↑"| RL
+%     RL -->|"encrypted specimen data ↑"| NL
+%
+%     NL -.->|"confirmation ↓"| RL
+%     RL -.->|"confirmation ↓"| ZL
+%     ZL -.->|"confirmation ↓"| WL
+%
+%     WL -->|"payload"| OC
+%     ZL -->|"payload"| OC
+%     RL -->|"payload"| OC
+%
+%     ZL -->|"hash + provenance"| BC
+%     RL -->|"hash + provenance"| BC
+%     NL -->|"hash + provenance"| BC
+%
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+%     style BC fill:#d0d0d0,stroke:#333
+% ==========================
 
 \subsection{Report Completeness Verification}\label{subsec:completeness}
 
@@ -242,8 +451,29 @@ To enforce this requirement programmatically, every smart contract at each hiera
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Completeness Verification]\\Figure placeholder\vspace{2em}}}
-\caption{Report completeness verification design.}\label{fig:completeness}
+\caption{Report completeness verification via selective anchoring. The smart contract queries on-chain submission hashes against expected reporting units per period and catchment area, computing a completeness ratio without accessing raw surveillance payloads.}\label{fig:completeness}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Report Completeness Verification
+% Scientific purpose: Shows how completeness is verified using on-chain hash records
+% rather than raw data, aligning with the selective-anchoring principle while
+% automating the weekly reporting compliance check.
+%
+% flowchart TD
+%     REG["Reporting-Period Registry"]
+%     SC["Completeness Calculator Contract"]
+%     HA["On-Chain Hash Index"]
+%     CR["Completeness Ratio Output"]
+%     ALERT["Gap Alert Event"]
+%
+%     REG -->|"expected units & period"| SC
+%     HA -->|"submitted hashes per unit"| SC
+%     SC -->|"received / expected"| CR
+%     SC -->|"missing units"| ALERT
+%
+%     style SC fill:#e8e8e8,stroke:#333
+%     style HA fill:#d0d0d0,stroke:#333
+% ==========================
 
 \subsection{Surveillance Data Analysis}\label{subsec:analysis}
 
@@ -254,24 +484,101 @@ The data analysis component implements three epidemiological analysis dimensions
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Temporal Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Temporal analysis design.}\label{fig:temporal}
+\caption{Temporal analysis workflow. Authorized analysts retrieve encrypted case data from off-chain storage, verify integrity against on-chain hashes, decrypt, and compute time-series trend indicators for outbreak detection.}\label{fig:temporal}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Temporal Analysis Workflow
+% Scientific purpose: Shows how temporal epidemiological analysis operates on
+% integrity-verified off-chain data, maintaining the privacy-layered architecture
+% while computing time-series outbreak indicators.
+%
+% flowchart LR
+%     BC["Blockchain · Hash Anchor"]
+%     OC["Off-Chain Encrypted Store"]
+%     AN["Authorized Analyst"]
+%     DEC["Decrypt & Parse"]
+%     TS["Time-Series Extraction"]
+%     TR["Trend & Anomaly Detection"]
+%     OUT["Outbreak Alert Output"]
+%
+%     AN -->|"verify provenance"| BC
+%     BC -.->|"CID + permission"| AN
+%     AN -->|"retrieve by CID"| OC
+%     OC -->|"encrypted payload"| DEC
+%     DEC --> TS
+%     TS --> TR
+%     TR --> OUT
+%
+%     style BC fill:#d0d0d0,stroke:#333
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+% ==========================
 
 \textbf{Analysis by place.} Geospatial variables (kebele, woreda, town) are extracted to support areal infection spread analysis across administrative boundaries at multiple hierarchical levels. Spatial analysis identifies geographic clustering of cases and tracks the directionality of disease spread. Figure~\ref{fig:spatial} presents the spatial analysis design.
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Spatial Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Spatial analysis design.}\label{fig:spatial}
+\caption{Spatial analysis workflow. Geospatial variables are extracted from integrity-verified off-chain records to identify geographic clustering and track disease spread across administrative boundaries.}\label{fig:spatial}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Spatial Analysis Workflow
+% Scientific purpose: Illustrates extraction of geospatial variables from verified
+% off-chain records for areal spread analysis across hierarchical administrative units.
+%
+% flowchart LR
+%     BC["Blockchain · Hash Anchor"]
+%     OC["Off-Chain Encrypted Store"]
+%     AN["Authorized Analyst"]
+%     DEC["Decrypt & Parse"]
+%     GEO["Geospatial Extraction"]
+%     CL["Cluster & Spread Analysis"]
+%     MAP["Spatial Alert Output"]
+%
+%     AN -->|"verify provenance"| BC
+%     BC -.->|"CID + permission"| AN
+%     AN -->|"retrieve by CID"| OC
+%     OC -->|"encrypted payload"| DEC
+%     DEC --> GEO
+%     GEO --> CL
+%     CL --> MAP
+%
+%     style BC fill:#d0d0d0,stroke:#333
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+% ==========================
 
 \textbf{Analysis by person.} Demographic variables (age, sex, ethnicity, occupation) are extracted from reported data to compare the total number and proportion of suspected and confirmed cases for a given infection. A dedicated smart contract function at each reporting level executes these comparative computations, enabling identification of disproportionately affected population subgroups. Figure~\ref{fig:person} presents the person-based analysis design.
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Person-Based Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Person-based analysis design.}\label{fig:person}
+\caption{Person-based analysis workflow. Demographic variables are extracted from integrity-verified off-chain records to identify disproportionately affected population subgroups while preserving individual-level privacy through selective disclosure.}\label{fig:person}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Person-Based Analysis Workflow
+% Scientific purpose: Shows demographic analysis operating on verified off-chain data
+% with privacy-preserving selective disclosure, enabling subgroup identification
+% without exposing individual-level records unnecessarily.
+%
+% flowchart LR
+%     BC["Blockchain · Hash Anchor"]
+%     OC["Off-Chain Encrypted Store"]
+%     AN["Authorized Analyst"]
+%     SD["Selective Disclosure Filter"]
+%     DEM["Demographic Extraction"]
+%     CMP["Subgroup Comparison"]
+%     OUT["Population Risk Output"]
+%
+%     AN -->|"verify provenance"| BC
+%     BC -.->|"CID + permission"| AN
+%     AN -->|"retrieve by CID"| OC
+%     OC -->|"encrypted payload"| SD
+%     SD -->|"filtered fields"| DEM
+%     DEM --> CMP
+%     CMP --> OUT
+%
+%     style BC fill:#d0d0d0,stroke:#333
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+% ==========================
 
 \subsubsection{Morbidity Measures}\label{subsubsec:morbidity}
 
@@ -282,18 +589,213 @@ Two standard epidemiological measures are computed within the analysis framework
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Incidence Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Incidence proportion analysis workflow.}\label{fig:incidence}
+\caption{Incidence proportion analysis workflow. New-case counts are derived from integrity-verified off-chain records and divided by the at-risk population denominator to produce incidence rates for outbreak detection.}\label{fig:incidence}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Incidence Proportion Analysis Workflow
+% Scientific purpose: Details the computation of incidence proportion from verified
+% off-chain data, showing the numerator (new cases) and denominator (at-risk population)
+% derivation pathway.
+%
+% flowchart TD
+%     VD["Verified Decrypted Records"]
+%     NC["New Case Count (numerator)"]
+%     POP["At-Risk Population (denominator)"]
+%     INC["Incidence Proportion = NC / POP"]
+%     EW["Early Warning Threshold Check"]
+%
+%     VD --> NC
+%     VD --> POP
+%     NC --> INC
+%     POP --> INC
+%     INC --> EW
+%
+%     style INC fill:#e8e8e8,stroke:#333
+% ==========================
 
 \textit{Prevalence} quantifies the proportion of persons in a population who have a particular disease at a specified point in time or over a defined period, encompassing both new and pre-existing cases.\cite{cdc2012principles} Prevalence tracking provides a measure of overall disease burden within a surveillance catchment. Figure~\ref{fig:prevalence} illustrates the prevalence analysis workflow.
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Prevalence Analysis]\\Figure placeholder\vspace{2em}}}
-\caption{Prevalence analysis workflow.}\label{fig:prevalence}
+\caption{Prevalence analysis workflow. Total existing and new case counts are derived from integrity-verified off-chain records and divided by total population to produce point or period prevalence measures for disease burden assessment.}\label{fig:prevalence}
 \end{figure}
+% ===== Mermaid Source =====
+% Figure: Prevalence Analysis Workflow
+% Scientific purpose: Details the computation of prevalence from verified off-chain data,
+% showing the summation of new and pre-existing cases relative to total population.
+%
+% flowchart TD
+%     VD["Verified Decrypted Records"]
+%     EC["Existing + New Cases (numerator)"]
+%     TPOP["Total Population (denominator)"]
+%     PREV["Prevalence = EC / TPOP"]
+%     DB["Disease Burden Assessment"]
+%
+%     VD --> EC
+%     VD --> TPOP
+%     EC --> PREV
+%     TPOP --> PREV
+%     PREV --> DB
+%
+%     style PREV fill:#e8e8e8,stroke:#333
+% ==========================
 
 The integration of these epidemiological measures within the blockchain-based architecture ensures that morbidity computations are performed on verified, tamper-proof data, and that the resulting early warning indicators inherit the integrity guarantees of the underlying distributed ledger.
+
+\subsection{Privacy and Zero-Knowledge Verification Layer}\label{subsec:privacy}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Privacy and ZKP Layer]\\Figure placeholder\vspace{2em}}}
+\caption{Layered privacy architecture with zero-knowledge verification. The three privacy mechanisms---encrypted off-chain storage, dynamic access control with revocation, and zero-knowledge proof verification---operate across architectural tiers to enforce selective disclosure without exposing raw surveillance records.}\label{fig:privacy}
+\end{figure}
+% ===== Mermaid Source =====
+% Figure: Privacy and Zero-Knowledge Verification Layer
+% Scientific purpose: Visualizes the three-mechanism privacy architecture that replaces
+% the thesis's immutability-only privacy model. Shows how encrypted storage, dynamic ACL,
+% and ZKP work together across tiers to enable selective disclosure and revocable access.
+%
+% graph TB
+%     subgraph PL["Privacy Layer"]
+%         direction TB
+%         subgraph M1["Mechanism 1 · Encrypted Off-Chain Storage"]
+%             ENC["AES-256 Encryption"]
+%             IPFS["IPFS Content-Addressed Store"]
+%         end
+%         subgraph M2["Mechanism 2 · Dynamic Access Control"]
+%             GRANT["Grant Permission"]
+%             REVOKE["Revoke Permission"]
+%             EXPIRE["Time-Bound Expiry"]
+%             ACL["Smart Contract ACL"]
+%         end
+%         subgraph M3["Mechanism 3 · Zero-Knowledge Verification"]
+%             PROVE["Prover (Reporting Tier)"]
+%             VERIFY["Verifier (Requesting Tier)"]
+%             ZKP["zk-SNARK Circuit"]
+%         end
+%     end
+%
+%     ENC --> IPFS
+%     GRANT --> ACL
+%     REVOKE --> ACL
+%     EXPIRE --> ACL
+%     PROVE -->|"proof π"| ZKP
+%     ZKP -->|"accept/reject"| VERIFY
+%
+%     style M1 fill:#f5f5f5,stroke:#333
+%     style M2 fill:#e8e8e8,stroke:#333
+%     style M3 fill:#dcdcdc,stroke:#333
+% ==========================
+
+\subsection{Consensus and Validator Governance Model}\label{subsec:consensus}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Consensus and Validator Governance]\\Figure placeholder\vspace{2em}}}
+\caption{Consensus selection and validator governance model. Validators are appointed across administrative tiers with asymmetric responsibilities. The consensus mechanism is selected through comparative evaluation against workload, trust, latency, and infrastructure constraints specific to LMIC deployment.}\label{fig:consensus}
+\end{figure}
+% ===== Mermaid Source =====
+% Figure: Consensus and Validator Governance Model
+% Scientific purpose: Addresses the blueprint requirement for explicit consensus justification
+% and validator governance. Shows the comparative evaluation framework and the tiered
+% validator appointment model with collusion/failure assumptions.
+%
+% graph TB
+%     subgraph VG["Validator Governance"]
+%         direction TB
+%         NA["National Validators · Full nodes"]
+%         RA["Regional Validators · Full nodes"]
+%         DA["District Validators · Light nodes"]
+%         FA["Facility Actors · Reporting only"]
+%     end
+%
+%     subgraph CE["Consensus Evaluation Framework"]
+%         direction LR
+%         POA["PoA"]
+%         DPOS["DPoS"]
+%         PBFT["PBFT Variants"]
+%         RAFT["Raft-Based Alliance"]
+%     end
+%
+%     subgraph CR["Selection Criteria"]
+%         WL["Workload Profile"]
+%         TC["Trust Concentration"]
+%         LAT["Latency Tolerance"]
+%         INF["Infrastructure Capacity"]
+%     end
+%
+%     WL --> CE
+%     TC --> CE
+%     LAT --> CE
+%     INF --> CE
+%
+%     CE -->|"selected mechanism"| VG
+%
+%     NA -.->|"appoints"| RA
+%     RA -.->|"appoints"| DA
+%
+%     style VG fill:#e8e8e8,stroke:#333
+%     style CE fill:#f5f5f5,stroke:#333
+%     style CR fill:#dcdcdc,stroke:#333
+% ==========================
+
+\subsection{Threat-Response Architecture}\label{subsec:threats}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Threat-Response Mapping]\\Figure placeholder\vspace{2em}}}
+\caption{Architectural threat-response mapping. Each identified threat category is linked to its corresponding architectural countermeasure, showing how the hybrid architecture systematically addresses confidentiality, privacy, governance, and inclusion threats identified in the critique.}\label{fig:threats}
+\end{figure}
+% ===== Mermaid Source =====
+% Figure: Threat-Response Mapping
+% Scientific purpose: Provides a systematic visualization of the expanded threat model,
+% mapping each critique-identified threat to its architectural countermeasure. Ensures
+% traceability between threats and design decisions across four threat categories.
+%
+% graph LR
+%     subgraph CT["Confidentiality Threats"]
+%         T1["Metadata Exposure"]
+%         T2["Case-Level Overdisclosure"]
+%     end
+%     subgraph PT["Privacy Threats"]
+%         T3["Unauthorized Access Persistence"]
+%         T4["Validation Without Confidentiality"]
+%     end
+%     subgraph GT["Governance Threats"]
+%         T5["Validator Collusion/Failure"]
+%         T6["Trust Concentration"]
+%     end
+%     subgraph IT["Inclusion Threats"]
+%         T7["Heavy-Node Exclusion"]
+%         T8["Integration Weakness"]
+%     end
+%
+%     subgraph RM["Architectural Responses"]
+%         R1["Off-Chain Encrypted Storage"]
+%         R2["Selective Disclosure + ZKP"]
+%         R3["Dynamic ACL · Grant/Revoke/Expire"]
+%         R4["Validator Governance Model"]
+%         R5["Edge/Fog + Light Node Roles"]
+%         R6["FHIR-Aware Privacy Workflows"]
+%     end
+%
+%     T1 --> R1
+%     T2 --> R1
+%     T2 --> R2
+%     T3 --> R3
+%     T4 --> R2
+%     T5 --> R4
+%     T6 --> R4
+%     T7 --> R5
+%     T8 --> R6
+%
+%     style CT fill:#f5f5f5,stroke:#333
+%     style PT fill:#ebebeb,stroke:#333
+%     style GT fill:#e0e0e0,stroke:#333
+%     style IT fill:#d6d6d6,stroke:#333
+%     style RM fill:#cccccc,stroke:#333
+% ==========================
 
 %% ===== PROTOTYPE IMPLEMENTATION =====
 \section{Prototype Implementation}\label{sec:implementation}
