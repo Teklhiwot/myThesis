@@ -3,7 +3,7 @@
 - [x] Abstract
 - [x] Introduction
 - [x] Related Work
-- [ ] Methodology
+- [x] Methodology
 - [ ] Proposed Architecture
 - [ ] Prototype Implementation
 - [ ] Evaluation

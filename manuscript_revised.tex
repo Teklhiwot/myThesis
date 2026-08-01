@@ -142,7 +142,7 @@ Rubio-Solis et al.\cite{rubiosolis2019zika} & N/A & No & No & N/A & No \\
 
 \subsection{Research Design}\label{subsec:design}
 
-This study adopts the Systems Development Research Methodology (SDRM) proposed by Nunamaker et al.\cite{nunamaker1990systems} SDRM provides a structured, iterative framework for constructing and evaluating information systems artifacts through five stages: (1) concept design, (2) system architecture development, (3) system analysis and design, (4) prototype development, and (5) observation and evaluation. This methodology is appropriate for the present work because the research objective---designing a blockchain-based model and demonstrating its feasibility through a functional prototype---aligns with SDRM's theory-testing orientation and proof-by-demonstration approach. Figure~\ref{fig:sdrm} illustrates the SDRM process.
+This study adopts the Systems Development Research Methodology (SDRM) proposed by Nunamaker et al.\cite{nunamaker1990systems}, instantiated through five iterative stages aligned to the hybrid surveillance architecture (Figure~\ref{fig:sdrm}).
 
 \begin{figure}[!ht]
 \centering
@@ -150,11 +150,19 @@ This study adopts the Systems Development Research Methodology (SDRM) proposed b
 \caption{Systems Development Research Methodology (SDRM) process.}\label{fig:sdrm}
 \end{figure}
 
-The five stages were instantiated as follows. In the concept design stage, a structured literature review identified the limitations of existing DEWS systems and established blockchain technology as a candidate solution. The architecture development stage produced the four-component blockchain-based model (Section~\ref{sec:model}). The analysis and design stage specified smart contract structures, access control logic, and interaction flows. The prototype development stage implemented the model on the Ethereum platform. The observation and evaluation stage subjected the prototype to performance, usability, and security assessment.
+\textbf{Stage 1---Problem Identification and Concept Design.} A structured literature review identified five persistent deficiencies in LMIC surveillance systems (Section~\ref{sec:introduction}) and four categories of architectural shortcoming in first-generation blockchain-health designs: monolithic on-chain storage, narrow privacy models, unargued consensus assumptions, and resource-uniform participation. These findings established the requirements for a hybrid, privacy-layered architecture.
+
+\textbf{Stage 2---Architecture Development.} Six design objectives were derived from the gap analysis: (1)~selective on-chain anchoring with encrypted off-chain storage, (2)~layered privacy with zero-knowledge verification and dynamic permission lifecycle, (3)~edge/fog preprocessing for resource-constrained sites, (4)~comparative consensus evaluation with validator governance, (5)~hierarchical event processing aligned to public-health administrative tiers, and (6)~FHIR-aware interoperability workflows. Each objective maps to a specific architectural component (Section~\ref{sec:model}).
+
+\textbf{Stage 3---Analysis and Design.} Smart-contract coordination logic, off-chain storage interfaces (IPFS), access-control state machines with grant/revoke/expire semantics, and tier-specific node-role specifications were designed against the six objectives.
+
+\textbf{Stage 4---Prototype Development.} A functional prototype was implemented on Ethereum to validate the smart-contract coordination layer, demonstrating selective anchoring, hierarchical access control, and automated completeness verification.
+
+\textbf{Stage 5---Observation and Evaluation.} The prototype was subjected to three-dimensional evaluation: performance (block generation timing), usability (Software Usability Measurement Inventory with domain professionals), and security (expanded threat model addressing validator collusion, metadata leakage, overbroad tier exposure, and equity-aware governance).
 
 \subsection{Blockchain Suitability Assessment}\label{subsec:suitability}
 
-Prior to model development, a formal assessment determined whether blockchain technology constitutes an appropriate solution for the DEWS domain. From eight published blockchain decision frameworks (Figure~\ref{fig:frameworks}), the IEEE Spectrum blockchain decision tree\cite{peck2017blockchain} was selected for its standardization, parsimony, and accessibility to domain stakeholders. The framework poses structured questions addressing satisfaction with traditional databases, the number of active data participants, trust levels among participants, and privacy and control requirements.
+Prior to architecture design, blockchain suitability for the DEWS domain was assessed using the IEEE Spectrum decision framework\cite{peck2017blockchain}, selected from eight published frameworks (Figure~\ref{fig:frameworks}) for its parsimony and accessibility to domain stakeholders.
 
 \begin{figure}[!ht]
 \centering
@@ -162,7 +170,7 @@ Prior to model development, a formal assessment determined whether blockchain te
 \caption{Blockchain decision frameworks evaluated.}\label{fig:frameworks}
 \end{figure}
 
-A survey was administered to 10 purposively sampled epidemiologists and decision-making staff at the Amhara Public Health Institute between February 14 and March 2, 2021. Semi-structured interviews were conducted individually, with each respondent briefed on blockchain fundamentals before completing the IEEE decision tree questionnaire. Table~\ref{tab:survey} presents the responses.
+Ten purposively sampled epidemiologists and decision-making staff at the Amhara Public Health Institute completed semi-structured interviews (February--March 2021). Table~\ref{tab:survey} summarizes the responses.
 
 \begin{table}[!ht]
 \caption{Blockchain suitability survey results (n=10).}\label{tab:survey}
@@ -183,11 +191,11 @@ Average & 82.85 \\
 \end{tabular*}
 \end{table}
 
-Across the seven decision criteria, an average of 82.85\% of respondents provided affirmative answers---exceeding the majority threshold required by the framework to classify a use case as blockchain-suitable. Notable results include: 90\% confirmed that traditional paper-based methods cannot meet operational needs; 100\% affirmed that multiple participants require data update capabilities; and 90\% indicated low mutual trust among current system actors. These results validate the adoption of blockchain technology for the DEWS workflow and informed the subsequent model design.
+An average of 82.85\% affirmative responses exceeded the framework's majority threshold, confirming blockchain suitability for the surveillance domain. This assessment validates the use of blockchain \emph{as a coordination and proof layer}; it does not justify full on-chain data storage, which the architecture explicitly avoids. The specific architectural pattern---selective anchoring with encrypted off-chain storage, layered privacy, and comparative consensus---was derived from the literature-driven gap analysis rather than from the suitability survey alone.
 
 \subsection{Scope and Limitations}\label{subsec:scope}
 
-The methodology scope encompasses design, prototyping, and evaluation of blockchain-based surveillance operations. The study is limited to the Ethiopian DEWS context, employs the Ethereum Rinkeby test network rather than mainnet deployment, and draws survey participants from a single regional public health institute. These constraints are acknowledged as limitations affecting generalizability; however, the architectural model itself is designed to be platform-agnostic and transferable to other national surveillance contexts.
+The study scope encompasses the design, prototyping, and evaluation of the smart-contract coordination layer within the hybrid architecture. The following methodological boundaries apply: (1)~the prototype validates coordination-layer feasibility on Ethereum but does not implement the complete off-chain storage, edge/fog, or Layer-2 components, which are specified architecturally; (2)~performance evaluation uses the Rinkeby test network, not mainnet deployment; (3)~suitability survey participants are drawn from a single regional institute (n=10), limiting generalizability of stakeholder findings; and (4)~the expanded threat model is analytically derived rather than empirically penetration-tested. These constraints bound the current empirical claims while preserving the architectural contribution, which is designed to be transferable across LMIC surveillance contexts.
 
 %% ===== PROPOSED MODEL =====
 \section{Proposed Blockchain-Based Model for Disease Early Warning and Surveillance}\label{sec:model}
