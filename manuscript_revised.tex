@@ -68,15 +68,13 @@ The remainder of this paper is organized as follows. Section~\ref{sec:background
 %% ===== BACKGROUND AND RELATED WORK =====
 \section{Background and Related Work}\label{sec:background}
 
-\subsection{Blockchain Technology}\label{subsec:blockchain}
+\subsection{Blockchain Foundations for Health Surveillance}\label{subsec:blockchain}
 
-A blockchain is a decentralized, distributed ledger that records transactions in cryptographically linked blocks, each containing a hash of the previous block, a timestamp, and transaction data. This chaining mechanism renders the ledger tamper-evident: altering any historical record necessitates recomputation of all subsequent block hashes and consensus agreement from a majority of network nodes. The properties most relevant to health information systems are immutability (committed records cannot be retroactively modified), decentralization (no single point of failure or control), consensus-driven validation (Byzantine fault tolerance without trusted intermediaries), and transaction traceability (complete audit trails across distributed participants).
+Blockchain provides four properties directly relevant to distributed health surveillance: immutability of committed records, decentralized validation without trusted intermediaries, consensus-driven Byzantine fault tolerance, and end-to-end transaction traceability.\cite{yaga2018blockchain} However, these properties alone are insufficient for privacy-sensitive, resource-constrained surveillance deployments. Full ledger replication forces every node to store the complete surveillance payload, producing unsustainable storage growth and bandwidth demands in low- and middle-income settings. Immutability, while protecting against retroactive tampering, does not prevent metadata exposure, overbroad read access across health-system tiers, or the absence of selective disclosure. Consequently, modern blockchain-health architectures have shifted from monolithic on-chain designs toward \emph{hybrid} models that confine the ledger to coordination artifacts---hashes, permissions, provenance, alerts, and audit events---while encrypted bulk data resides off-chain.
 
-Blockchain platforms are categorized along two dimensions: access control (public vs.\ private) and participation governance (permissioned vs.\ permissionless). Public permissionless blockchains (e.g., Ethereum) permit unrestricted participation and are suited to applications requiring transparency and open verifiability, whereas private permissioned variants restrict network membership to authorized entities. For a comprehensive taxonomy, the reader is referred to Yaga et al.\cite{yaga2018blockchain}
+\subsection{Platform and Consensus Rationale}\label{subsec:platform}
 
-\subsection{Platform Selection}\label{subsec:platform}
-
-The Ethereum platform was selected for this work based on a structured comparison against Bitcoin and XRPL (Ripple) across eleven criteria (Table~\ref{tab:platform}). Ethereum uniquely satisfies the requirements of the proposed model: native support for smart contracts and decentralized applications (dApps), a Turing-complete programming language (Solidity) enabling arbitrary business logic implementation, cross-industry applicability, digital identity management, distributed cloud computing capabilities, and a 14-second block time suitable for near-real-time surveillance reporting. Bitcoin lacks smart contract and dApp support, while XRPL does not support smart contracts, dApps, human-readable addresses, or data oracles---all of which are required by the hierarchical surveillance workflow.
+Ethereum was selected as the coordination layer based on its native smart-contract support, Turing-complete programmability (Solidity), and mature tooling for permissioned deployment (Table~\ref{tab:platform}). Critically, the architecture reframes Ethereum from a bulk data repository to a \emph{selective-anchoring} layer: smart contracts manage only cryptographic hashes, access-control state, and audit artifacts, while encrypted surveillance payloads are stored off-chain via IPFS. This separation addresses the scalability, cost, and privacy limitations inherent in direct Layer-1 data recording.
 
 \begin{table}[!ht]
 \caption{Blockchain platform comparison (selection criteria).}\label{tab:platform}
@@ -95,40 +93,49 @@ Block time & 14 s & 10 min & 4 s \\
 \end{tabular*}
 \end{table}
 
+Consensus selection is treated as a workload-specific governance decision rather than an assumed default. While the prototype employs Proof of Authority (PoA) for its low latency and deterministic finality, Section~\ref{sec:model} presents a comparative evaluation of PoA against Delegated Proof of Stake (DPoS), Practical Byzantine Fault Tolerance (PBFT) variants, and Raft-based alliance models, assessed against LMIC workload characteristics, trust topology, validator appointment, collusion resilience, and infrastructure constraints.
+
 \subsection{Disease Early Warning and Surveillance in Ethiopia}\label{subsec:dews}
 
-Ethiopia's disease early warning and surveillance (DEWS) system operates through a hierarchical reporting structure encompassing community health posts, woreda health offices, zone health offices, regional health offices, and the national Ethiopian Public Health Institute (EPHI)/Public Health Emergency Management (PHEM) center. The system conducts both indicator-based surveillance (structured data from scheduled reporting) and event-based surveillance (rapid capture of informal signals indicating potential public health risks).
+Ethiopia's DEWS system operates through a five-tier hierarchy: community health posts, woreda health offices, zone health offices, regional health offices, and the national Ethiopian Public Health Institute (EPHI)/Public Health Emergency Management (PHEM) center. The system conducts indicator-based surveillance (structured scheduled reporting) and event-based surveillance (rapid informal signal capture). Twenty priority diseases are classified into 13 immediately reportable conditions (notification within 30 minutes) and 7 weekly reportable conditions, with report completeness calculated weekly at every tier. Laboratory surveillance operates through a parallel tiered network (woreda, zone, regional, national) responsible for specimen confirmation.
 
-Twenty priority diseases and conditions are designated for national surveillance, classified into 13 immediately reportable conditions (requiring notification within 30 minutes of identification) and 7 weekly reportable conditions. All levels calculate report completeness on a weekly basis---defined as the proportion of reporting units that submitted data on time within a catchment area. Laboratory-based surveillance operates through a tiered network (woreda, zone, regional, national) responsible for pathogen identification and specimen confirmation.
-
-The current system relies on paper-based reporting with hierarchical compilation at each level. Data flows upward from health posts through woreda and zone to regional and national levels, while feedback and information sharing flow downward. This architecture suffers from the five deficiencies identified in Section~\ref{sec:introduction}: centralization, security vulnerabilities, traceability gaps, manual completeness verification, and interoperability barriers between organizational levels.
+This administrative hierarchy maps directly to the proposed multi-tier computing architecture. Peripheral health posts and community workers operate in environments characterized by intermittent connectivity, underpowered devices, and limited technical capacity---conditions that preclude full blockchain peer responsibilities. District and zonal offices possess intermediate infrastructure suitable for batching, validation, and edge/fog preprocessing. Regional and national tiers command sufficient resources for validator duties and analytical workloads. The architecture therefore assigns asymmetric node roles aligned to each tier's actual capacity, ensuring that resource-constrained peripheral sites participate as lightweight reporting nodes rather than heavy consensus participants.
 
 \subsection{Related Work}\label{subsec:related}
 
-Several studies have applied blockchain technology to healthcare data management. Omar et al.\cite{omar2019privacy} proposed a patient-centric blockchain system utilizing decentralization to mitigate cloud data security risks and cryptographic functions to ensure data immutability; however, the system lacks interoperability between actors (patients, physicians, hospitals). Griggs et al.\cite{griggs2018healthcare} developed blockchain-based smart contracts for securing medical IoT sensor data with HIPAA-compliant automated notifications, though their system exhibits transaction delays that limit real-time effectiveness. Quaini et al.\cite{quaini2018model} presented UniRec, a blockchain-based distributed electronic health record architecture evaluated through test scenarios, which suffers from prohibitive disk space requirements at scale. Zhang et al.\cite{zhang2018fhirchain} proposed FHIRChain, a blockchain architecture meeting ONC interoperability requirements for collaborative cancer care, but reported semantic interoperability challenges and legacy system compatibility limitations.
+\subsubsection{Blockchain-Based Healthcare Architectures}
 
-In the domain of disease surveillance specifically, machine learning approaches have been explored. Bollig et al.\cite{bollig2020machine} applied deep learning (LSTM networks) to syndromic surveillance using veterinary necropsy reports, demonstrating temporal and spatial disease pattern detection over 33,000 reports across 14 years. Harvey et al.\cite{harvey2021predicting} developed a Gaussian Process and Random Forest-based malaria early warning system for Burkina Faso, predicting 13-week case rates from routine health facility data. Rubio-Solis et al.\cite{rubiosolis2019zika} proposed neural network-based predictive surveillance for dengue at district level in Brazil. While these ML-based approaches demonstrate predictive utility, they inherit the fundamental limitations identified in Section~\ref{sec:introduction}: data centralization requirements, adversarial vulnerability, and limited generalizability.
+Blockchain adoption in healthcare has progressed through identifiable architectural generations. Early systems stored clinical records directly on-chain: Omar et al.\cite{omar2019privacy} proposed a patient-centric blockchain using decentralization to mitigate cloud security risks, but lacked interoperability between actors and placed full payloads on the ledger. Griggs et al.\cite{griggs2018healthcare} applied smart contracts to medical IoT data with HIPAA-compliant notifications, yet reported transaction delays that limit real-time utility. Quaini et al.\cite{quaini2018model} presented UniRec, a distributed electronic health record architecture whose full-replication design produces prohibitive disk space requirements at scale. These first-generation approaches share a common limitation: treating the blockchain as a bulk data repository rather than a coordination layer, thereby inheriting the storage, cost, and privacy weaknesses identified in Section~\ref{sec:introduction}.
 
-Table~\ref{tab:related} summarizes the comparative analysis.
+More recent architectures have moved toward hybrid storage and privacy-layered designs. Zhang et al.\cite{zhang2018fhirchain} proposed FHIRChain, combining blockchain coordination with HL7 FHIR interoperability for collaborative cancer care, but reported semantic interoperability challenges and legacy system limitations. The architectural direction established by such hybrid approaches---separating data custody from on-chain coordination---informs the selective-anchoring model proposed in this work, which extends it with encrypted off-chain storage via IPFS, zero-knowledge verification, and dynamic permission lifecycle management.
+
+\subsubsection{Surveillance-Specific Digital Architectures}
+
+Digital surveillance systems have predominantly employed machine learning. Bollig et al.\cite{bollig2020machine} applied LSTM networks to syndromic surveillance across 33,000 veterinary necropsy reports, demonstrating temporal and spatial pattern detection. Harvey et al.\cite{harvey2021predicting} developed Gaussian Process and Random Forest models for malaria early warning in Burkina Faso using routine health facility data. Rubio-Solis et al.\cite{rubiosolis2019zika} proposed neural network-based predictive surveillance for dengue at district level in Brazil. While these systems demonstrate predictive utility, they require centralized data aggregation, remain vulnerable to adversarial manipulation, and provide no inherent guarantees of provenance, immutability, or audit traceability---properties essential for trustworthy multi-institutional surveillance.
+
+\subsubsection{Architectural Gap Analysis}
+
+Table~\ref{tab:related} positions the present work against prior systems across the six architectural dimensions identified in the blueprint.
 
 \begin{table*}[!ht]
-\caption{Comparative analysis of related work.}\label{tab:related}
-\begin{tabular*}{\textwidth}{@{\extracolsep\fill}llll@{}}
+\caption{Comparative analysis of related work against target architectural dimensions.}\label{tab:related}
+\begin{tabular*}{\textwidth}{@{\extracolsep\fill}llllll@{}}
 \toprule
-Study & Domain & Technology & Key Limitation \\
+Study & Hybrid Storage & Layered Privacy & Edge/Fog & Consensus Rationale & LMIC Awareness \\
 \midrule
-Omar et al.\cite{omar2019privacy} & Patient data management & Blockchain & No interoperability between actors \\
-Griggs et al.\cite{griggs2018healthcare} & Medical IoT security & Blockchain + Smart contracts & Transaction delay \\
-Quaini et al.\cite{quaini2018model} & Electronic health records & Blockchain & Disk space scalability \\
-Zhang et al.\cite{zhang2018fhirchain} & Clinical data sharing & Blockchain (FHIRChain) & Semantic interoperability \\
-Bollig et al.\cite{bollig2020machine} & Syndromic surveillance & Deep learning (LSTM) & Data availability; centralization \\
-Harvey et al.\cite{harvey2021predicting} & Malaria early warning & GP + Random Forest & Limited statistical rigor \\
-Rubio-Solis et al.\cite{rubiosolis2019zika} & Dengue prediction & Neural network + ELM & Domain-specific; centralized \\
+Omar et al.\cite{omar2019privacy} & No & No & No & No & No \\
+Griggs et al.\cite{griggs2018healthcare} & No & Partial & No & No & No \\
+Quaini et al.\cite{quaini2018model} & No & No & No & No & No \\
+Zhang et al.\cite{zhang2018fhirchain} & Partial & Partial & No & No & No \\
+Bollig et al.\cite{bollig2020machine} & N/A & No & No & N/A & No \\
+Harvey et al.\cite{harvey2021predicting} & N/A & No & No & N/A & Partial \\
+Rubio-Solis et al.\cite{rubiosolis2019zika} & N/A & No & No & N/A & No \\
+\textbf{This work} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} \\
 \bottomrule
 \end{tabular*}
 \end{table*}
 
-\textbf{Research gap.} No prior work addresses the specific intersection of blockchain technology and infectious disease early warning and surveillance. Existing blockchain-in-healthcare studies focus on patient records, medical IoT, or clinical data sharing---none targets the hierarchical multi-tier reporting workflow characteristic of national DEWS systems. Conversely, surveillance-focused studies employ centralized ML approaches that cannot provide the immutability, decentralization, and traceability guarantees required for trustworthy public health reporting. The present work addresses this gap by proposing and evaluating a blockchain-based model purpose-built for the DEWS domain.
+\textbf{Research gap.} No prior blockchain-health architecture integrates all five dimensions required for LMIC disease surveillance: (1)~hybrid storage with selective on-chain anchoring, (2)~layered privacy with zero-knowledge verification and dynamic permission lifecycle, (3)~edge/fog preprocessing for resource-constrained peripheral sites, (4)~comparative consensus evaluation with explicit validator governance, and (5)~LMIC-aware asymmetric node-role design aligned to public-health administrative hierarchies. The present work addresses this compound gap by proposing a unified architecture that treats privacy, consensus, scalability, and resource asymmetry as linked governance concerns within a single hierarchical surveillance framework.
 
 %% ===== RESEARCH METHODOLOGY =====
 \section{Research Methodology}\label{sec:methodology}
