@@ -1,7 +1,7 @@
 # 03 Rewrite Status
 
 - [x] Abstract
-- [ ] Introduction
+- [x] Introduction
 - [ ] Related Work
 - [ ] Methodology
 - [ ] Proposed Architecture
