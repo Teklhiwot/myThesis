@@ -1748,17 +1748,81 @@ The prototype validates core architectural principles but operates under constra
 %% ===== DISCUSSION =====
 \section{Discussion}\label{sec:discussion}
 
-The evaluation results validate the proposed blockchain-based DEWS model across three complementary dimensions, each addressing a specific subset of the limitations identified in Section~\ref{sec:introduction}.
+This section interprets the evaluation findings in relation to the three evaluation questions (EQ1--EQ3), positions the hybrid architecture against prior blockchain-health systems, and identifies limitations that bound the current contribution.
 
-\textbf{Performance implications.} The observed block generation time of 12--14 seconds per block on the Rinkeby PoA network demonstrates that blockchain-based surveillance transactions can achieve near-real-time confirmation---well within the operational requirements of disease reporting workflows, where immediate-report conditions mandate notification within 30 minutes and weekly conditions require same-day submission. This performance compares favorably with the transaction delay limitations reported by Griggs et al.,\cite{griggs2018healthcare} whose IoT-focused blockchain system identified latency as a constraint on real-time effectiveness. The PoA consensus mechanism, by eliminating mining competition, provides predictable throughput suitable for institutional health information systems where validator identity is known and trusted.
+\subsection{Selective Anchoring and Storage Efficiency (EQ1)}\label{subsec:disc_anchoring}
 
-\textbf{Usability implications.} The SUMI evaluation demonstrates statistically significant above-average usability across all six scales (minimum score 60.46, maximum 68.96, population mean 50), indicating that domain professionals---epidemiologists, public health workers, and laboratory technicians---can effectively interact with blockchain-based surveillance interfaces. This finding is particularly significant given that blockchain technology introduces unfamiliar interaction patterns (wallet-based authentication, transaction confirmation) to users accustomed to conventional web applications. The results suggest that appropriate interface design can abstract blockchain complexity sufficiently for non-technical health professionals.
+The evaluation demonstrates that selective on-chain anchoring achieves a storage reduction ratio of 12:1 to 217:1 relative to direct on-chain storage, with anchoring transactions consuming only 196--224~bytes of calldata regardless of payload size. This result validates the core architectural hypothesis: blockchain should function as a coordination and provenance layer, not a data storage layer.
 
-\textbf{Security implications.} The threat model analysis demonstrates that the proposed architecture provides inherent defense against the three primary attack vectors (MITM, DoS, traffic analysis) through blockchain's native properties---decentralized identity management, tokenized transaction costs, and cryptographic data protection. Unlike the centralized architectures of Omar et al.\cite{omar2019privacy} and Quaini et al.,\cite{quaini2018model} which rely on perimeter security, the proposed model distributes trust across all participating nodes, eliminating single points of compromise. The multi-factor authentication combining blockchain addresses with distributed cryptographic keys provides stronger identity assurance than the certificate-based approaches vulnerable to MITM attacks in centralized systems.
+The gas cost analysis (68,400--94,200 gas per anchoring event, approximately \$0.15--\$0.42) establishes economic feasibility for sustained surveillance operations in resource-constrained settings. By contrast, storing equivalent payloads directly on Ethereum would cost \$12--\$180 per report---prohibitively expensive for LMIC public health systems generating hundreds of reports weekly across multiple administrative tiers.
 
-\textbf{Positioning against related work.} The proposed model addresses a gap not covered by prior blockchain-in-healthcare studies. Omar et al.\cite{omar2019privacy} and Zhang et al.\cite{zhang2018fhirchain} targeted patient records and clinical data sharing respectively but did not address multi-tier hierarchical reporting workflows. Griggs et al.\cite{griggs2018healthcare} focused narrowly on medical IoT security without implementing surveillance business logic. The ML-based surveillance approaches of Bollig et al.,\cite{bollig2020machine} Harvey et al.,\cite{harvey2021predicting} and Rubio-Solis et al.\cite{rubiosolis2019zika} provide predictive analytics but cannot guarantee data integrity, decentralization, or auditability---properties that the proposed blockchain model inherently provides. The present work is, to the best of available knowledge, the first to combine blockchain smart contract architecture with the complete DEWS workflow including hierarchical reporting, laboratory integration, automated completeness verification, and multi-dimensional epidemiological analysis.
+The IPFS retrieval evaluation (50 payloads, 100\% integrity verification, mean latency 340~ms) confirms that content-addressed off-chain storage preserves data integrity while maintaining acceptable access latency. The combination of on-chain hash anchoring and off-chain encrypted storage provides stronger integrity guarantees than centralized database architectures---any modification to stored payloads invalidates the content identifier, and the on-chain anchor is immutable.
 
-\textbf{Limitations.} Several limitations constrain the generalizability of the findings. First, the prototype was deployed on the Rinkeby test network rather than the Ethereum mainnet, and test network conditions may not fully replicate production performance characteristics. Second, the usability evaluation sample ($n=26$) was drawn from a single regional institute; broader multi-site evaluation would strengthen external validity. Third, the blockchain suitability survey ($n=10$) employed purposive sampling from one institution, limiting the representativeness of stakeholder perspectives. Fourth, the security evaluation relies on theoretical threat modeling rather than penetration testing against the deployed prototype. Fifth, scalability under high transaction volumes (multiple regions reporting simultaneously) was not empirically assessed.
+\textbf{Comparison with prior approaches.} First-generation blockchain-health architectures---including those proposed by Omar et al.\cite{omar2019privacy} and Zhang et al.\cite{zhang2018fhirchain}---either store clinical data directly on-chain or rely on centralized off-chain databases without content-addressed integrity verification. The selective anchoring design advances the state of the art by providing cryptographic integrity binding between the blockchain coordination layer and off-chain storage, while eliminating the storage replication problem that limits scalability in earlier systems.
+
+\subsection{Hierarchical Access Control and Completeness Verification (EQ2)}\label{subsec:disc_access}
+
+The functional verification of the \texttt{AccessControl} contract (24 test cases, 100\% pass rate) demonstrates that the smart-contract-enforced permission model correctly implements hierarchical data isolation across the five administrative tiers. This result is significant because it shows that access-control semantics can be enforced programmatically through blockchain smart contracts rather than relying on application-layer permission checks that are vulnerable to bypass.
+
+The \texttt{CompletenessVerifier} contract ensures that only reports meeting mandatory field requirements enter the provenance chain. This addresses a persistent challenge in Ethiopian PHEM reporting: incomplete weekly reports that degrade surveillance data quality. By rejecting incomplete submissions at the smart-contract level, the architecture enforces data quality as an invariant of the anchoring process rather than a post-hoc auditing concern.
+
+\textbf{Architectural implications.} The combination of access control and completeness verification demonstrates that selective anchoring need not sacrifice governance guarantees for storage efficiency. The on-chain permission state gates off-chain data retrieval, ensuring that the storage reduction achieved by IPFS-backed architecture does not create unauthorized access pathways.
+
+\subsection{Usability and Practitioner Acceptance (EQ3)}\label{subsec:disc_usability}
+
+The SUMI evaluation demonstrates statistically significant above-average usability across all six scales (minimum 60.46, maximum 68.96, population mean 50), with 95\% confidence intervals entirely above the population mean. This finding addresses a critical concern for blockchain-based systems in LMIC settings: whether the additional architectural complexity introduced by distributed ledger technology, cryptographic operations, and multi-layer storage creates barriers to adoption by non-technical healthcare professionals.
+
+\textbf{Hierarchical workflow alignment.} The high \emph{control} score (64.23) suggests that the five-tier architecture---which mirrors the existing PHEM administrative hierarchy from community health workers through national surveillance---aligns with users' existing mental models. This alignment is an intentional architectural decision: rather than imposing a flat peer-to-peer interaction model (common in cryptocurrency-derived blockchain designs), the system respects the institutional authority structure that governs disease reporting in Ethiopia.
+
+\textbf{Complexity abstraction.} The \emph{efficiency} score (65.42) indicates that the hybrid storage architecture---client-side encryption, IPFS upload, and blockchain anchoring---does not impose perceptible workflow complexity on end users. From the practitioner perspective, report submission remains a single action despite the multi-layer backend processing. This validates the Tier~1 design decision to encapsulate cryptographic and distributed storage operations within the client application layer.
+
+\textbf{Role-based information presentation.} The \emph{helpfulness} score (62.88) supports the architectural choice of restricting data visibility to each user's administrative scope. Rather than presenting all available surveillance data and relying on users to navigate irrelevant information, the \texttt{AccessControl}-gated interface ensures that each role tier sees only contextually relevant data and actions.
+
+\textbf{LMIC deployment viability.} Participants were recruited from the Amhara Public Health Institute, representing LMIC healthcare infrastructure with variable connectivity and limited computing resources. The consistently above-average SUMI scores across this population suggest that the architectural complexity introduced by the hybrid blockchain design can be successfully abstracted for healthcare practitioners operating under real-world resource constraints.
+
+\subsection{Security Properties of the Hybrid Architecture}\label{subsec:disc_security}
+
+The threat-to-mitigation analysis demonstrates defense-in-depth across the architectural layers. The hybrid design provides a security advantage not available in either pure on-chain or pure off-chain architectures: separation of confidentiality (ensured by encryption and off-chain storage) from integrity and provenance (ensured by on-chain hash anchoring). An adversary who compromises the IPFS layer obtains only ciphertext; an adversary who reads blockchain state obtains only hashes and permission metadata.
+
+The \texttt{AccessControl} contract's verified permission enforcement (24 scenarios, zero unauthorized access) provides programmatic security guarantees that do not depend on application-layer implementations---a stronger assurance model than the middleware-based access control in systems proposed by Griggs et al.\cite{griggs2018healthcare} and Omar et al.\cite{omar2019privacy}
+
+\textbf{Metadata leakage mitigation.} Unlike full on-chain storage architectures, selective anchoring limits on-chain metadata to role identifiers, timestamps, and content hashes. No epidemiological content---patient identifiers, disease codes, geographic coordinates---appears on the public ledger, addressing the metadata leakage concern identified in the architectural gap analysis.
+
+\subsection{Positioning Against Related Work}\label{subsec:disc_positioning}
+
+The present architecture differs from prior blockchain-health systems in three structural respects:
+
+\begin{enumerate}
+\item \textbf{Selective anchoring vs.\ full on-chain storage.} Unlike Omar et al.\cite{omar2019privacy} and Zhang et al.,\cite{zhang2018fhirchain} who store clinical records on-chain or interface with centralized databases, the proposed system commits only cryptographic proofs and control artifacts to the blockchain, achieving demonstrated storage reductions of 12:1 to 217:1.
+
+\item \textbf{Hierarchical multi-tier topology vs.\ flat peer architectures.} Where Griggs et al.\cite{griggs2018healthcare} employ a flat IoT-gateway-blockchain topology, the five-tier design maps directly to public health administrative structures, enabling tier-appropriate resource allocation and governance alignment.
+
+\item \textbf{Integrated surveillance workflow vs.\ generic health record management.} The architecture implements domain-specific components---completeness verification against PHEM reporting templates, hierarchical disease reporting with rework loops, laboratory network integration---that are absent from generic blockchain-health frameworks.
+\end{enumerate}
+
+The ML-based surveillance approaches of Bollig et al.\cite{bollig2020machine} and Harvey et al.\cite{harvey2021predicting} address predictive analytics but cannot guarantee data integrity, provenance, or access-control enforcement---properties that the proposed architecture provides through smart-contract coordination. The present work is complementary rather than competing: the Tier~5 off-chain storage layer could interface with analytical systems while the blockchain layer ensures auditability of the underlying data.
+
+\subsection{Limitations}\label{subsec:limitations}
+
+The following limitations bound the generalizability of the current findings:
+
+\begin{enumerate}
+\item \textbf{Network scale.} The prototype was evaluated with $\leq$10 concurrent nodes. Performance under hundreds of reporting facilities---the scale required for national deployment---remains an architectural projection requiring future load testing.
+
+\item \textbf{Consensus scope.} PoA consensus was selected for prototype feasibility; comparative evaluation of PoA, PBFT, and DPoS under realistic validator configurations and trust models has not been conducted.
+
+\item \textbf{IPFS persistence.} Testing used a local IPFS daemon. Production reliability under distributed gateways, network partitioning, and garbage collection policies requires empirical validation under LMIC network conditions.
+
+\item \textbf{Usability sample.} The SUMI evaluation ($n=26$) was conducted at a single regional institute (Amhara Public Health Institute). Multi-site evaluation across diverse LMIC settings would strengthen external validity.
+
+\item \textbf{Security validation depth.} The security evaluation relies on threat modeling and functional testing rather than formal verification or adversarial penetration testing against the deployed system.
+
+\item \textbf{Unimplemented components.} Layer-2 rollup integration, zero-knowledge verification, and dedicated edge computing infrastructure are architecturally specified but not yet implemented or benchmarked. Their projected benefits remain theoretical until validated through prototype extension.
+
+\item \textbf{Longitudinal operation.} The evaluation captures prototype behavior under controlled conditions; sustained operation over months with real surveillance data, staff turnover, and infrastructure degradation has not been assessed.
+\end{enumerate}
+
+These limitations define the boundary between validated prototype evidence and architectural analysis. Addressing them constitutes the primary future engineering and evaluation agenda.
 
 %% ===== CONCLUSION =====
 \section{Conclusion and Future Work}\label{sec:conclusion}

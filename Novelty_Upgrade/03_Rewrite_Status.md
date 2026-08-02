@@ -7,6 +7,6 @@
 - [x] Proposed Architecture
 - [x] Prototype Implementation
 - [x] Evaluation
-- [ ] Discussion
+- [x] Discussion
 - [ ] Conclusion
 - [ ] Back Matter
