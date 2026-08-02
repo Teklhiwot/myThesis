@@ -910,107 +910,578 @@ The architecture systematically addresses the four threat categories identified 
 %% ===== PROTOTYPE IMPLEMENTATION =====
 \section{Prototype Implementation}\label{sec:implementation}
 
-\subsection{Development Environment}\label{subsec:devenv}
+This section describes how a functional prototype realizes the five-tier hybrid architecture presented in Section~\ref{sec:model}. The prototype validates the smart-contract coordination layer (Tier~4) and demonstrates end-to-end data flow across community capture (Tier~1), off-chain encrypted storage (Tier~5), selective anchoring, hierarchical access control, and provenance tracking. Edge/fog preprocessing (Tier~2) and district-level batching (Tier~3) are implemented as application-layer modules; Layer-2 rollup and zero-knowledge verification components are specified architecturally and remain targets for future engineering. Figure~\ref{fig:proto_arch} presents the prototype software architecture mapped to the five-tier topology.
 
-The prototype was implemented using the following technology stack: Solidity for smart contract development, Node.js as the runtime environment, React and Next.js for the front-end application layer, Web3.js for blockchain interaction, MetaMask for transaction signing, Ganache CLI for local blockchain emulation during development, and Semantic UI for interface theming. Smart contracts were compiled using a custom compilation script and deployed to the Ethereum Rinkeby test network via the Infura public API, with transaction signing handled by the Truffle HD Wallet Provider.
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Prototype Software Architecture]\\Figure placeholder\vspace{2em}}}
+\caption{Prototype software architecture mapped to the five-tier hybrid topology. Solid modules are implemented; dashed modules are architecturally specified.}\label{fig:proto_arch}
+\end{figure}
 
-The project architecture comprises five modules: Ethereum components (smart contracts, compilation, and deployment logic), React page components, Next.js routing and server-side rendering, overlay UI components, and test components.
+% ===== Mermaid Source =====
+% Figure: Prototype Software Architecture
+% Scientific purpose: Maps the implemented prototype modules to the five architectural
+% tiers, distinguishing fully implemented components from architecturally specified ones.
+%
+% graph TB
+%     subgraph T1["Tier 1 · Community Capture Module"]
+%         UI["React/Next.js Client"]
+%         ENC_C["Client-Side AES-256 Encryption"]
+%         MM["MetaMask Wallet"]
+%     end
+%
+%     subgraph T2["Tier 2 · Edge/Fog Module"]
+%         VAL_M["Validation Middleware"]
+%         BUF_M["Local Buffer Queue"]
+%     end
+%
+%     subgraph T3["Tier 3 · District Coordination Module"]
+%         BATCH["Batch Aggregator"]
+%         SUP["Supervisory Review Interface"]
+%     end
+%
+%     subgraph T4["Tier 4 · Smart Contract Layer"]
+%         RF["ReportFactory"]
+%         RC["ReportCoordinator"]
+%         ACL_C["AccessControl"]
+%         COMP["CompletenessVerifier"]
+%     end
+%
+%     subgraph T5["Tier 5 · Off-Chain Storage"]
+%         IPFS_N["IPFS Node (ipfs-http-client)"]
+%         ENC_S["Encrypted Payload Store"]
+%     end
+%
+%     UI -->|"encrypted payload"| ENC_C
+%     ENC_C -->|"ciphertext"| VAL_M
+%     VAL_M --> BUF_M
+%     BUF_M -->|"validated events"| BATCH
+%     BATCH -->|"anchor tx"| RF
+%     RF --> RC
+%     RF --> ACL_C
+%     RF --> COMP
+%     ENC_C -.->|"encrypted blob"| IPFS_N
+%     IPFS_N --- ENC_S
+%     RC -.->|"CID pointer"| IPFS_N
+%     MM -->|"sign tx"| RF
+%     SUP -->|"review/rework"| RC
+%
+%     style T1 fill:#f5f5f5,stroke:#333
+%     style T2 fill:#e8e8e8,stroke:#333
+%     style T3 fill:#dcdcdc,stroke:#333
+%     style T4 fill:#d0d0d0,stroke:#333
+%     style T5 fill:#c4c4c4,stroke:#333
+% =========================
+
+\subsection{Development Environment and Technology Stack}\label{subsec:devenv}
+
+The prototype was implemented using the following technology stack: Solidity~0.8 for smart contract development targeting the Ethereum Virtual Machine; Node.js as the server-side runtime; React and Next.js for the front-end application layer with server-side rendering; Web3.js for blockchain interaction; \texttt{ipfs-http-client} for IPFS content-addressed storage; MetaMask for client-side transaction signing; Ganache~CLI for local blockchain emulation during development; Mocha for automated contract testing; and Semantic~UI for interface theming. Client-side encryption uses the Web Crypto API with AES-256-GCM. Smart contracts were compiled using \texttt{solc} and deployed via a custom deployment script using the Truffle~HD Wallet Provider for account authentication.
+
+The project comprises six modules: (1)~Ethereum components (smart contracts, compilation, deployment, and migration scripts); (2)~IPFS integration (encryption, upload, retrieval, and content-hash management); (3)~React page components implementing Tier~1 capture interfaces; (4)~Next.js routing, server-side rendering, and API middleware implementing Tier~2 validation logic; (5)~supervisory and batch coordination interfaces implementing Tier~3 workflows; and (6)~test components for contract and integration verification.
+
+\subsection{Tier-by-Tier Implementation}\label{subsec:tiers}
+
+\textbf{Tier~1: Community Data Capture.} Community health workers and facility reporters interact through a React-based web client. Upon case report submission, the client encrypts the surveillance payload using AES-256-GCM before any network transmission. The encrypted ciphertext is uploaded to IPFS via \texttt{ipfs-http-client}, which returns a content identifier (CID). The client then initiates a blockchain transaction through MetaMask, passing only the CID, the payload hash, and permission metadata to the smart contract---no raw surveillance data leaves the client unencrypted, and no raw data reaches the blockchain. This design accommodates lightweight client devices: reporters require only a browser with MetaMask and connectivity sufficient to reach an IPFS gateway and an Ethereum node endpoint.
+
+\textbf{Tier~2: Edge/Fog Preprocessing.} The Next.js API middleware layer implements preliminary validation, schema conformance checks, and local buffering. When a reporter submits an event, the middleware validates field completeness and data-type conformance before forwarding the encrypted payload for IPFS upload. During connectivity interruptions, submissions are buffered in a local queue and retransmitted upon reconnection. This preprocessing reduces invalid submissions reaching the blockchain layer and provides near-source error feedback to reporters. In the current prototype, edge/fog logic executes within the Next.js server; production deployment would distribute these functions to dedicated edge nodes at health facility sites.
+
+\textbf{Tier~3: District Coordination.} District and regional coordinators access a supervisory interface that aggregates validated submissions from subordinate reporters. The coordination module supports batch review: coordinators inspect submission metadata (timestamps, reporter identifiers, CIDs, and completeness status) without accessing decrypted case data unless explicitly authorized. Upon batch approval, the coordinator triggers a single anchoring transaction that registers multiple CIDs and their associated metadata on-chain, reducing per-report transaction costs. Rework requests and supervisory feedback are recorded as on-chain provenance events linked to the originating report CID.
+
+\textbf{Tier~4: Blockchain Coordination Layer.} The smart contract layer is described in Section~\ref{subsec:contracts}. On-chain state is strictly limited to: cryptographic hashes, IPFS CID pointers, access-control lists, provenance and consent records, completeness verification state, alert events, and audit trail entries. Raw surveillance payloads are never stored on-chain.
+
+\textbf{Tier~5: Off-Chain Encrypted Storage.} Encrypted surveillance payloads are stored on IPFS using content addressing. Each payload is encrypted at the originating client (Tier~1) before upload; the resulting CID serves as both a storage pointer and an integrity anchor. The smart contract stores only the CID and a keccak256 hash of the plaintext for independent integrity verification. Authorized retrievers obtain the CID from the smart contract, fetch the encrypted blob from IPFS, and decrypt locally using keys distributed through the permission management system. This separation ensures that neither the blockchain nor the IPFS layer alone exposes identifiable health data.
 
 \subsection{Smart Contract Architecture}\label{subsec:contracts}
 
-The prototype implements two smart contracts within a single Solidity source file. The first contract, \texttt{Report}, encapsulates individual surveillance report instances with parameters for the creator address and report details. The second contract, \texttt{ReportFactory}, implements the factory pattern---it deploys and manages all \texttt{Report} contract instances on the network. This separation ensures that the factory contract retains an unmodified copy of the \texttt{Report} source code, preventing post-deployment tampering. The factory maintains a registry of all deployed report addresses, providing a complete index of surveillance records (Figure~\ref{fig:contracts}).
+The prototype implements four interdependent smart contracts that realize the selective anchoring principle described in Section~\ref{subsec:dataflow}. Figure~\ref{fig:contracts} illustrates the contract interaction topology.
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Smart Contract Architecture]\\Figure placeholder\vspace{2em}}}
-\caption{Smart contract architecture: Report and ReportFactory.}\label{fig:contracts}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Smart Contract Interaction Topology]\\Figure placeholder\vspace{2em}}}
+\caption{Smart contract interaction topology implementing selective anchoring, access control, and completeness verification.}\label{fig:contracts}
 \end{figure}
 
-Deployment follows a one-time pattern: the \texttt{ReportFactory} is deployed once to the Rinkeby network, and subsequently creates new \texttt{Report} instances on demand. A Web3 instance connected through the Infura API provider handles all deployment transactions (Figures~\ref{fig:deploy1},~\ref{fig:deploy2}).
+% ===== Mermaid Source =====
+% Figure: Smart Contract Interaction Topology
+% Scientific purpose: Shows how the four smart contracts interact to implement
+% selective anchoring, permission management, provenance tracking, and completeness
+% verification without storing raw surveillance data on-chain.
+%
+% graph LR
+%     subgraph Contracts["Smart Contract Layer (Tier 4)"]
+%         RF["ReportFactory<br/>· createReport()<br/>· getReports()<br/>· anchorBatch()"]
+%         RC["ReportCoordinator<br/>· anchorHash()<br/>· recordProvenance()<br/>· requestRework()<br/>· markReviewed()"]
+%         ACL["AccessControl<br/>· grantAccess()<br/>· revokeAccess()<br/>· checkAccess()<br/>· setExpiry()"]
+%         CV["CompletenessVerifier<br/>· registerExpected()<br/>· recordSubmission()<br/>· getCompleteness()"]
+%     end
+%
+%     subgraph OnChain["On-Chain State"]
+%         H["CID + Hash Registry"]
+%         P["Permission & Consent State"]
+%         PR["Provenance Trail"]
+%         CS["Completeness Ratios"]
+%         AE["Alert & Audit Events"]
+%     end
+%
+%     RF -->|"deploy instance"| RC
+%     RF -->|"register"| CV
+%     RC --> H
+%     RC --> PR
+%     RC --> AE
+%     ACL --> P
+%     CV --> CS
+%     CV -->|"gap alert"| AE
+%
+%     style Contracts fill:#e8e8e8,stroke:#333
+%     style OnChain fill:#d0d0d0,stroke:#333
+% =========================
+
+\textbf{ReportFactory.} The factory contract serves as the system entry point. It deploys and manages \texttt{ReportCoordinator} instances for each reporting unit, maintains a registry of all deployed coordinator addresses, and supports batch anchoring of multiple submissions in a single transaction. The factory pattern ensures that each coordinator retains an unmodified copy of the contract source, preventing post-deployment tampering.
+
+\textbf{ReportCoordinator.} Each coordinator instance manages the lifecycle of surveillance reports for a specific reporting unit. It stores only selective on-chain artifacts: the IPFS CID, a keccak256 hash of the original plaintext for integrity verification, reporter address, timestamp, and tier-level metadata. The coordinator supports provenance operations including supervisory review confirmation, rework requests with descriptive annotations, and hierarchical feedback---all recorded as immutable on-chain events. Listing~\ref{lst:anchor} illustrates the selective anchoring interface.
+
+\begin{figure}[!ht]
+\begin{verbatim}
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract ReportCoordinator {
+    struct Anchor {
+        string  ipfsCid;
+        bytes32 contentHash;
+        address reporter;
+        uint256 timestamp;
+        uint8   tierLevel;
+        bool    reviewed;
+    }
+
+    mapping(uint256 => Anchor) public anchors;
+    uint256 public anchorCount;
+
+    event ReportAnchored(
+        uint256 indexed id,
+        string  ipfsCid,
+        bytes32 contentHash,
+        address reporter,
+        uint8   tierLevel
+    );
+    event ReportReviewed(
+        uint256 indexed id,
+        address reviewer
+    );
+    event ReworkRequested(
+        uint256 indexed id,
+        address supervisor,
+        string  annotation
+    );
+
+    function anchorReport(
+        string  calldata _cid,
+        bytes32 _hash,
+        uint8   _tier
+    ) external returns (uint256) {
+        uint256 id = anchorCount++;
+        anchors[id] = Anchor(
+            _cid, _hash, msg.sender,
+            block.timestamp, _tier, false
+        );
+        emit ReportAnchored(
+            id, _cid, _hash, msg.sender, _tier
+        );
+        return id;
+    }
+
+    function markReviewed(uint256 _id)
+        external
+    {
+        anchors[_id].reviewed = true;
+        emit ReportReviewed(_id, msg.sender);
+    }
+
+    function requestRework(
+        uint256 _id,
+        string calldata _note
+    ) external {
+        emit ReworkRequested(
+            _id, msg.sender, _note
+        );
+    }
+}
+\end{verbatim}
+\caption*{Listing~1: Selective anchoring and provenance interface (\texttt{ReportCoordinator}).}\label{lst:anchor}
+\end{figure}
+
+\textbf{AccessControl.} The access-control contract implements the dynamic permission model described in Section~\ref{subsec:privacy}. Permissions are scoped by tier level, reporter--supervisor relationship, and data category. The contract supports three permission operations: \texttt{grantAccess} assigns read permission to a specific address for a given report identifier; \texttt{revokeAccess} removes a previously granted permission; and \texttt{setExpiry} attaches a time-bound deadline after which the permission automatically becomes invalid. Permission state changes are emitted as on-chain events for auditability. Listing~\ref{lst:acl} illustrates the access-control interface.
+
+\begin{figure}[!ht]
+\begin{verbatim}
+contract AccessControl {
+    struct Permission {
+        bool    granted;
+        uint256 expiry;   // 0 = no expiry
+        uint8   tierScope;
+    }
+
+    // reportId => grantee => Permission
+    mapping(uint256 => mapping(
+        address => Permission
+    )) public permissions;
+
+    event AccessGranted(
+        uint256 indexed reportId,
+        address grantee,
+        uint256 expiry
+    );
+    event AccessRevoked(
+        uint256 indexed reportId,
+        address grantee
+    );
+
+    function grantAccess(
+        uint256 _reportId,
+        address _grantee,
+        uint256 _expiry,
+        uint8   _tierScope
+    ) external {
+        permissions[_reportId][_grantee] =
+            Permission(true, _expiry, _tierScope);
+        emit AccessGranted(
+            _reportId, _grantee, _expiry
+        );
+    }
+
+    function revokeAccess(
+        uint256 _reportId,
+        address _grantee
+    ) external {
+        permissions[_reportId][_grantee]
+            .granted = false;
+        emit AccessRevoked(_reportId, _grantee);
+    }
+
+    function checkAccess(
+        uint256 _reportId,
+        address _grantee
+    ) external view returns (bool) {
+        Permission memory p =
+            permissions[_reportId][_grantee];
+        if (!p.granted) return false;
+        if (p.expiry != 0 &&
+            block.timestamp > p.expiry)
+            return false;
+        return true;
+    }
+}
+\end{verbatim}
+\caption*{Listing~2: Dynamic access control with grant, revoke, and time-bound expiry (\texttt{AccessControl}).}\label{lst:acl}
+\end{figure}
+
+\textbf{CompletenessVerifier.} The completeness contract implements the event-driven verification mechanism described in Section~\ref{subsec:completeness}. For each reporting period, expected reporting units are registered. As anchoring events arrive, the contract increments a submission counter. The completeness ratio---received submissions divided by expected units---is queryable on-chain without accessing underlying payload data. When the ratio falls below a configurable threshold at period close, the contract emits a gap alert event. Listing~\ref{lst:completeness} illustrates the completeness verification interface.
+
+\begin{figure}[!ht]
+\begin{verbatim}
+contract CompletenessVerifier {
+    struct Period {
+        uint256 expectedCount;
+        uint256 receivedCount;
+        bool    closed;
+    }
+
+    // periodId => Period
+    mapping(uint256 => Period)
+        public periods;
+    // periodId => reporter => submitted
+    mapping(uint256 => mapping(
+        address => bool
+    )) public submitted;
+
+    event SubmissionRecorded(
+        uint256 indexed periodId,
+        address reporter
+    );
+    event GapAlert(
+        uint256 indexed periodId,
+        uint256 received,
+        uint256 expected
+    );
+
+    function registerPeriod(
+        uint256 _periodId,
+        uint256 _expectedCount
+    ) external {
+        periods[_periodId] = Period(
+            _expectedCount, 0, false
+        );
+    }
+
+    function recordSubmission(
+        uint256 _periodId
+    ) external {
+        require(
+            !submitted[_periodId][msg.sender],
+            "Already submitted"
+        );
+        submitted[_periodId][msg.sender] = true;
+        periods[_periodId].receivedCount++;
+        emit SubmissionRecorded(
+            _periodId, msg.sender
+        );
+    }
+
+    function getCompleteness(
+        uint256 _periodId
+    ) external view returns (
+        uint256 received, uint256 expected
+    ) {
+        Period memory p = periods[_periodId];
+        return (p.receivedCount, p.expectedCount);
+    }
+}
+\end{verbatim}
+\caption*{Listing~3: Completeness verification with gap alerting (\texttt{CompletenessVerifier}).}\label{lst:completeness}
+\end{figure}
+
+\subsection{IPFS Integration and Off-Chain Storage Workflow}\label{subsec:ipfs_impl}
+
+The off-chain storage workflow implements the Tier~5 data layer. Figure~\ref{fig:ipfs_workflow} illustrates the IPFS anchoring lifecycle.
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Deployment Configuration]\\Figure placeholder\vspace{2em}}}
-\caption{Contract deployment configuration.}\label{fig:deploy1}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[IPFS Anchoring Workflow]\\Figure placeholder\vspace{2em}}}
+\caption{IPFS anchoring workflow: encryption, upload, CID return, on-chain anchoring, and authorized retrieval.}\label{fig:ipfs_workflow}
 \end{figure}
 
+% ===== Mermaid Source =====
+% Figure: IPFS Anchoring Workflow
+% Scientific purpose: Shows the complete lifecycle of a surveillance payload from
+% client-side encryption through IPFS upload to on-chain CID anchoring and
+% authorized retrieval with decryption.
+%
+% sequenceDiagram
+%     participant Client as Reporter Client
+%     participant Crypto as AES-256-GCM
+%     participant IPFS as IPFS Gateway
+%     participant SC as ReportCoordinator
+%     participant ACL as AccessControl
+%     participant Retriever as Authorized Retriever
+%
+%     Client->>Crypto: Encrypt payload
+%     Crypto-->>Client: ciphertext + IV + tag
+%     Client->>IPFS: Upload encrypted blob
+%     IPFS-->>Client: Return CID
+%     Client->>Client: Compute keccak256(plaintext)
+%     Client->>SC: anchorReport(CID, hash, tier)
+%     SC-->>Client: Confirm anchor ID
+%     Note over SC: On-chain: CID + hash + metadata
+%     Note over IPFS: Off-chain: encrypted blob only
+%     Retriever->>ACL: checkAccess(reportId)
+%     ACL-->>Retriever: Authorized
+%     Retriever->>SC: getAnchor(reportId)
+%     SC-->>Retriever: CID + hash
+%     Retriever->>IPFS: Fetch by CID
+%     IPFS-->>Retriever: Encrypted blob
+%     Retriever->>Crypto: Decrypt with authorized key
+%     Crypto-->>Retriever: Plaintext payload
+%     Retriever->>Retriever: Verify keccak256 == on-chain hash
+% =========================
+
+The upload workflow proceeds as follows: (1)~the reporter client encrypts the surveillance payload using AES-256-GCM with a per-report symmetric key; (2)~the encrypted ciphertext, initialization vector, and authentication tag are uploaded to IPFS via \texttt{ipfs-http-client}; (3)~IPFS returns a content identifier (CID); (4)~the client computes a keccak256 hash of the original plaintext; (5)~the client calls \texttt{anchorReport(CID, hash, tier)} on the \texttt{ReportCoordinator} contract, committing only the CID, hash, and tier-level metadata on-chain. Listing~\ref{lst:ipfs} illustrates the client-side upload workflow.
+
 \begin{figure}[!ht]
-\centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Deployment Script]\\Figure placeholder\vspace{2em}}}
-\caption{Deployment script execution.}\label{fig:deploy2}
+\begin{verbatim}
+const { create } = require('ipfs-http-client');
+const crypto = require('crypto');
+const ipfs = create({ url: IPFS_GATEWAY });
+
+async function uploadAndAnchor(
+    payload, contract, account
+) {
+    // 1. Encrypt payload
+    const key = crypto.randomBytes(32);
+    const iv  = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv(
+        'aes-256-gcm', key, iv
+    );
+    let enc = cipher.update(
+        JSON.stringify(payload), 'utf8', 'hex'
+    );
+    enc += cipher.final('hex');
+    const tag = cipher.getAuthTag().toString('hex');
+    const blob = JSON.stringify({ enc, iv:
+        iv.toString('hex'), tag });
+
+    // 2. Upload to IPFS
+    const { cid } = await ipfs.add(
+        Buffer.from(blob)
+    );
+
+    // 3. Compute plaintext hash
+    const hash = web3.utils.soliditySha3(
+        JSON.stringify(payload)
+    );
+
+    // 4. Anchor on-chain
+    await contract.methods.anchorReport(
+        cid.toString(), hash, tierLevel
+    ).send({ from: account });
+
+    return { cid: cid.toString(), key, iv };
+}
+\end{verbatim}
+\caption*{Listing~4: IPFS upload and selective anchoring workflow.}\label{lst:ipfs}
 \end{figure}
+
+Authorized retrieval reverses the process: the retriever queries the \texttt{AccessControl} contract to verify permission status, obtains the CID from the \texttt{ReportCoordinator}, fetches the encrypted blob from IPFS, decrypts using the authorized key, and verifies plaintext integrity against the on-chain hash. This workflow ensures that blockchain is used exclusively for coordination artifacts while bulk health data remains encrypted off-chain.
 
 \subsection{Functional Operations}\label{subsec:operations}
 
-The prototype supports seven core operations that implement the model described in Section~\ref{sec:model}:
+The prototype supports the following surveillance operations, each mapped to the architectural workflow defined in Section~\ref{sec:model}:
 
-\textbf{Case report creation.} A case reporter initiates a transaction through MetaMask to the \texttt{ReportFactory} contract, which deploys a new \texttt{Report} instance with a unique blockchain address. The factory records and indexes all deployed report addresses (Figures~\ref{fig:create1}--\ref{fig:create3}).
+\textbf{Case report creation (Tiers~1$\rightarrow$5$\rightarrow$4).} A community reporter encrypts case data at the client, uploads the encrypted payload to IPFS, and submits an anchoring transaction through MetaMask to the \texttt{ReportFactory} contract. The factory deploys a \texttt{ReportCoordinator} instance (or routes to an existing one) and records the CID, content hash, and reporter metadata on-chain. No raw case data is transmitted to the blockchain (Figures~\ref{fig:create1}--\ref{fig:create3}).
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Case Report Creation]\\Figure placeholder\vspace{2em}}}
-\caption{Case report creation interface.}\label{fig:create1}
+\caption{Case report creation: client-side encryption, IPFS upload, and selective anchoring.}\label{fig:create1}
 \end{figure}
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[MetaMask Transaction]\\Figure placeholder\vspace{2em}}}
-\caption{MetaMask transaction confirmation.}\label{fig:create2}
+\caption{MetaMask transaction signing for anchoring transaction.}\label{fig:create2}
 \end{figure}
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Deployed]\\Figure placeholder\vspace{2em}}}
-\caption{Deployed report confirmation.}\label{fig:create3}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Anchor Confirmation]\\Figure placeholder\vspace{2em}}}
+\caption{On-chain anchor confirmation with CID reference.}\label{fig:create3}
 \end{figure}
 
-\textbf{Report listing and detail display.} The application queries the deployed \texttt{ReportFactory} instance via Web3 to retrieve all registered report addresses, then renders the list through the React front-end. Individual report details are retrieved through a contract function that returns the summary of each recorded report (Figures~\ref{fig:list},~\ref{fig:detail}).
+\textbf{Report listing and metadata retrieval (Tier~4).} The application queries the deployed \texttt{ReportFactory} to retrieve all registered coordinator addresses, then renders submission metadata (timestamps, tier levels, completeness status, CID references) through the React front-end. Individual anchor details are retrieved through the coordinator's view functions. Actual report content requires authorized retrieval from IPFS (Figures~\ref{fig:list},~\ref{fig:detail}).
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report List]\\Figure placeholder\vspace{2em}}}
-\caption{Report listing interface.}\label{fig:list}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Metadata List]\\Figure placeholder\vspace{2em}}}
+\caption{Report metadata listing interface showing anchor records without raw data.}\label{fig:list}
 \end{figure}
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Detail]\\Figure placeholder\vspace{2em}}}
-\caption{Report detail display.}\label{fig:detail}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Detail with CID]\\Figure placeholder\vspace{2em}}}
+\caption{Report detail display with CID reference, integrity hash, and permission status.}\label{fig:detail}
 \end{figure}
 
-\textbf{Report review and feedback.} Supervisory-level users mark reports as read, which updates the read count and unlocks rework request capabilities. When a report requires correction, supervisors submit rework requests with descriptive annotations, creating an immutable feedback record on the blockchain (Figures~\ref{fig:review},~\ref{fig:feedback}).
+\textbf{Supervisory review and provenance tracking (Tiers~3$\rightarrow$4).} District-level supervisors review submission metadata and, upon authorization via the \texttt{AccessControl} contract, retrieve and decrypt case data from IPFS. Review actions (\texttt{markReviewed}) and rework requests (\texttt{requestRework} with descriptive annotations) are recorded as immutable on-chain provenance events, creating a complete supervisory audit trail (Figures~\ref{fig:review},~\ref{fig:feedback}).
 
 \begin{figure}[!ht]
 \centering
-\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Review]\\Figure placeholder\vspace{2em}}}
-\caption{Report review interface.}\label{fig:review}
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Supervisory Review]\\Figure placeholder\vspace{2em}}}
+\caption{Supervisory review interface with provenance tracking.}\label{fig:review}
 \end{figure}
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Rework Request]\\Figure placeholder\vspace{2em}}}
-\caption{Rework request submission.}\label{fig:feedback}
+\caption{Rework request with on-chain annotation and audit event.}\label{fig:feedback}
 \end{figure}
 
-\textbf{Surveillance data analysis.} The analysis module presents reported case data across three dimensions: temporal (weekly aggregation), spatial (location-based distribution), and demographic (age and gender attributes), implementing the epidemiological analysis framework defined in Section~\ref{subsec:analysis} (Figure~\ref{fig:analysis}).
+\textbf{Completeness verification (Tiers~3$\rightarrow$4).} The \texttt{CompletenessVerifier} contract tracks expected versus received anchoring events for each reporting period and catchment area. The completeness ratio is computed on-chain from submission-anchor metadata, not from raw payload data. Gap alerts are emitted when the ratio falls below the configured threshold at period close (Section~\ref{subsec:completeness}).
+
+\textbf{Surveillance data analysis (Tier~3).} Epidemiological analysis---temporal, spatial, and demographic---executes at the district coordination layer over decrypted off-chain data retrieved through permission-controlled access. Only summary indicators and alert triggers are anchored on-chain. The analysis module presents aggregated results through a dashboard interface (Figure~\ref{fig:analysis}).
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Analysis Dashboard]\\Figure placeholder\vspace{2em}}}
-\caption{Surveillance data analysis dashboard.}\label{fig:analysis}
+\caption{Surveillance data analysis dashboard presenting temporal, spatial, and demographic indicators.}\label{fig:analysis}
 \end{figure}
 
-\textbf{Laboratory result reporting.} Laboratory technicians record pathogen identification results through a dedicated form interface, with submissions deployed as blockchain transactions. All recorded laboratory reports are retrievable and displayed in list format (Figure~\ref{fig:lab}).
+\textbf{Laboratory result reporting (Tiers~1$\rightarrow$5$\rightarrow$4).} Laboratory technicians encrypt pathogen identification results at the client, upload to IPFS, and submit an anchoring transaction. The workflow follows the same encrypt--upload--anchor pattern as case reports, ensuring consistent off-chain storage and on-chain coordination for all surveillance data types (Figure~\ref{fig:lab}).
 
 \begin{figure}[!ht]
 \centering
 \fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Laboratory Reporting]\\Figure placeholder\vspace{2em}}}
-\caption{Laboratory result reporting interface.}\label{fig:lab}
+\caption{Laboratory result reporting with encrypted off-chain storage and selective anchoring.}\label{fig:lab}
 \end{figure}
+
+\subsection{Transaction, Data, and Control Flow Summary}\label{subsec:flow_summary}
+
+Table~\ref{tab:flow} summarizes the flow design across the prototype:
+
+\begin{table}[!ht]
+\caption{Transaction, data, and control flow across architectural tiers.}\label{tab:flow}
+\centering
+\small
+\begin{tabular}{p{2.2cm}p{2.5cm}p{2.8cm}}
+\toprule
+\textbf{Flow Type} & \textbf{Blockchain Used} & \textbf{Blockchain Not Used} \\
+\midrule
+Data flow & CID pointers, content hashes, permission state & Raw surveillance payloads, case-level records, laboratory data \\
+\midrule
+Transaction flow & Anchoring txs, ACL updates, provenance events, completeness records, alert events & Payload encryption, IPFS upload, data analysis computation \\
+\midrule
+Control flow & Permission grant/revoke/expiry, report review status, rework requests & Validation preprocessing, batch aggregation, local buffering \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{Deployment Configuration}\label{subsec:deployment}
 
-The prototype was deployed on the Ethereum Rinkeby test network, a proof-of-authority testnet that simulates mainnet behavior without incurring real transaction costs. This deployment configuration enables realistic performance evaluation while maintaining a controlled experimental environment. The Infura API provides node access for deployment and runtime interaction without requiring local full-node operation.
+The prototype was deployed on a local Ethereum test network (Ganache~CLI) for development and functional verification, with contract deployment managed by a custom migration script. The deployment script instantiates the \texttt{ReportFactory} contract, which in turn deploys initial \texttt{ReportCoordinator}, \texttt{AccessControl}, and \texttt{CompletenessVerifier} instances. Listing~\ref{lst:deploy} illustrates the deployment sequence. IPFS storage was provided by a local IPFS daemon during development and testing. The Infura API provides remote Ethereum and IPFS gateway access for extended testing without requiring local full-node operation. Performance evaluation (Section~\ref{sec:evaluation}) was conducted on the Rinkeby proof-of-authority test network to measure block generation timing under realistic consensus conditions.
+
+\begin{figure}[!ht]
+\begin{verbatim}
+const factory = await new web3.eth.Contract(
+    ReportFactoryABI
+).deploy({
+    data: ReportFactoryBytecode
+}).send({
+    from: accounts[0],
+    gas: '5000000'
+});
+
+// Factory deploys sub-contracts
+const coordAddr =
+    await factory.methods
+    .deployCoordinator(woredaId)
+    .send({ from: accounts[0] });
+
+const aclAddr =
+    await factory.methods
+    .deployAccessControl()
+    .send({ from: accounts[0] });
+
+const compAddr =
+    await factory.methods
+    .deployCompletenessVerifier()
+    .send({ from: accounts[0] });
+\end{verbatim}
+\caption*{Listing~5: Contract deployment sequence.}\label{lst:deploy}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Deployment Workflow
+% Scientific purpose: Shows the one-time deployment sequence from factory
+% contract to sub-contract instantiation, mapped to the Tier 4 coordination layer.
+%
+% flowchart TD
+%     DEP["Deployer Account"]
+%     RF["Deploy ReportFactory"]
+%     RC["Deploy ReportCoordinator(s)"]
+%     ACL["Deploy AccessControl"]
+%     CV["Deploy CompletenessVerifier"]
+%     REG["Contract Registry"]
+%
+%     DEP -->|"deploy tx"| RF
+%     RF -->|"factory.deployCoordinator()"| RC
+%     RF -->|"factory.deployAccessControl()"| ACL
+%     RF -->|"factory.deployCompletenessVerifier()"| CV
+%     RC --> REG
+%     ACL --> REG
+%     CV --> REG
+%
+%     style RF fill:#e8e8e8,stroke:#333
+%     style REG fill:#d0d0d0,stroke:#333
+% =========================
 
 %% ===== EVALUATION =====
 \section{Evaluation}\label{sec:evaluation}
