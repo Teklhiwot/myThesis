@@ -6,7 +6,7 @@
 - [x] Methodology
 - [x] Proposed Architecture
 - [x] Prototype Implementation
-- [ ] Evaluation
+- [x] Evaluation
 - [ ] Discussion
 - [ ] Conclusion
 - [ ] Back Matter
