@@ -1,0 +1,130 @@
+\begin{thebibliography}{15}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Finlayson et~al.(2019)Finlayson, Bowers, Ito, Zittrain, Beam, and
+  Kohane]{finlayson2019adversarial}
+Samuel~G. Finlayson, John~D. Bowers, Joichi Ito, Jonathan~L. Zittrain,
+  Andrew~L. Beam, and Isaac~S. Kohane.
+\newblock Adversarial attacks on medical machine learning.
+\newblock \emph{Science}, 363\penalty0 (6433):\penalty0 1287--1289, 2019.
+\newblock \doi{10.1126/science.aaw4399}.
+
+\bibitem[Core et~al.(2012)Core, Lane, Van~Lent, Gomboc, Solomon, and
+  Rosenberg]{core2012building}
+Mark~G. Core, H.~Chad Lane, Michael Van~Lent, Dave Gomboc, Steve Solomon, and
+  Milton Rosenberg.
+\newblock Building explainable artificial intelligence systems.
+\newblock In \emph{Proceedings of the National Conference on Artificial
+  Intelligence}, volume~2, pages 1766--1773, 2012.
+
+\bibitem[Kelly et~al.(2019)Kelly, Karthikesalingam, Suleyman, Corrado, and
+  King]{kelly2019key}
+Christopher~J. Kelly, Alan Karthikesalingam, Mustafa Suleyman, Greg Corrado,
+  and Dominic King.
+\newblock Key challenges for delivering clinical impact with artificial
+  intelligence.
+\newblock \emph{BMC Medicine}, 17\penalty0 (1):\penalty0 195, 2019.
+\newblock \doi{10.1186/s12916-019-1426-2}.
+
+\bibitem[Yaga et~al.(2018)Yaga, Mell, Roby, and Scarfone]{yaga2018blockchain}
+Dylan Yaga, Peter Mell, Nik Roby, and Karen Scarfone.
+\newblock Blockchain technology overview.
+\newblock NIST Internal Report 8202, National Institute of Standards and
+  Technology, 2018.
+
+\bibitem[Omar et~al.(2019)Omar, Bhuiyan, Basu, Kiyomoto, and
+  Rahman]{omar2019privacy}
+Abdullah~Al Omar, Md~Zakirul~Alam Bhuiyan, Anirban Basu, Shinsaku Kiyomoto, and
+  Mohammad~Shahriar Rahman.
+\newblock Privacy-friendly platform for healthcare data in cloud based on
+  blockchain environment.
+\newblock \emph{Future Generation Computer Systems}, 95:\penalty0 511--521,
+  2019.
+\newblock \doi{10.1016/j.future.2018.12.044}.
+
+\bibitem[Griggs et~al.(2018)Griggs, Ossipova, Kohlios, Baccarini, Howson, and
+  Hayajneh]{griggs2018healthcare}
+Kristen~N. Griggs, Olya Ossipova, Christopher~P. Kohlios, Alessandro~N.
+  Baccarini, Emily~A. Howson, and Thaier Hayajneh.
+\newblock Healthcare blockchain system using smart contracts for secure
+  automated remote patient monitoring.
+\newblock \emph{Journal of Medical Systems}, 42\penalty0 (7):\penalty0 130,
+  2018.
+\newblock \doi{10.1007/s10916-018-0982-x}.
+
+\bibitem[Quaini et~al.(2018)Quaini, Roehrs, da~Costa, and
+  da~Rosa~Righi]{quaini2018model}
+Thomas Quaini, Alex Roehrs, Cristiano~Andr\'{e} da~Costa, and Rodrigo
+  da~Rosa~Righi.
+\newblock A model for blockchain-based distributed electronic health records.
+\newblock \emph{IADIS International Journal on WWW/Internet}, 16\penalty0
+  (2):\penalty0 66--79, 2018.
+\newblock \doi{10.33965/ijwi_2018161205}.
+
+\bibitem[Zhang et~al.(2018)Zhang, White, Schmidt, Lenz, and
+  Rosenbloom]{zhang2018fhirchain}
+Peng Zhang, Jules White, Douglas~C. Schmidt, Gunther Lenz, and S.~Trent
+  Rosenbloom.
+\newblock {FHIRChain}: applying blockchain to securely and scalably share
+  clinical data.
+\newblock \emph{Computational and Structural Biotechnology Journal},
+  16:\penalty0 267--278, 2018.
+\newblock \doi{10.1016/j.csbj.2018.07.004}.
+
+\bibitem[Bollig et~al.(2020)Bollig, Clarke, Elsmo, and
+  Craven]{bollig2020machine}
+Nicole Bollig, Laura Clarke, Erica Elsmo, and Mark Craven.
+\newblock Machine learning for syndromic surveillance using veterinary necropsy
+  reports.
+\newblock \emph{PLoS ONE}, 15\penalty0 (2):\penalty0 e0228105, 2020.
+\newblock \doi{10.1371/journal.pone.0228105}.
+
+\bibitem[Harvey et~al.(2021)Harvey, Valkenburg, and
+  Amara]{harvey2021predicting}
+David Harvey, Willem Valkenburg, and Aliou Amara.
+\newblock Predicting malaria epidemics in {Burkina Faso} with machine learning.
+\newblock \emph{PLoS ONE}, 16\penalty0 (6):\penalty0 e0253302, 2021.
+\newblock \doi{10.1371/journal.pone.0253302}.
+
+\bibitem[Rubio-Solis et~al.(2019)Rubio-Solis, Massoni, Musah,
+  et~al.]{rubiosolis2019zika}
+Adrian Rubio-Solis, Tiago Massoni, Anwar Musah, et~al.
+\newblock Zika virus: prediction of \textit{{Aedes}} mosquito larvae occurrence
+  in {Recife} ({Brazil}) using online extreme learning machine and neural
+  networks.
+\newblock In \emph{ACM International Conference Proceeding Series}. ACM, 2019.
+\newblock \doi{10.1145/3357729.3357738}.
+
+\bibitem[Nunamaker et~al.(1990)Nunamaker, Chen, and
+  Purdin]{nunamaker1990systems}
+Jay~F. Nunamaker, Minder Chen, and Titus D.~M. Purdin.
+\newblock Systems development in information systems research.
+\newblock \emph{Journal of Management Information Systems}, 7\penalty0
+  (3):\penalty0 89--106, 1990.
+\newblock \doi{10.1080/07421222.1990.11517898}.
+
+\bibitem[Peck(2017)]{peck2017blockchain}
+Morgen~E. Peck.
+\newblock Blockchain world---do you need a blockchain? {This} chart will tell
+  you if the technology can solve your problem.
+\newblock \emph{IEEE Spectrum}, 54\penalty0 (10):\penalty0 38--60, 2017.
+\newblock \doi{10.1109/MSPEC.2017.8048838}.
+
+\bibitem[{US Department of Health and Human Services}(2012)]{cdc2012principles}
+{US Department of Health and Human Services}.
+\newblock \emph{Principles of Epidemiology in Public Health Practice}.
+\newblock Centers for Disease Control and Prevention, 3rd edition, 2012.
+\newblock \doi{10.1201/9781315381848}.
+
+\bibitem[Bevan(1995)]{bevan1995measuring}
+Nigel Bevan.
+\newblock Measuring usability as quality of use.
+\newblock \emph{Software Quality Journal}, 4\penalty0 (2):\penalty0 115--130,
+  1995.
+\newblock \doi{10.1007/BF00402715}.
+
+\end{thebibliography}

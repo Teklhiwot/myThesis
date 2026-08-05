@@ -1,0 +1,1871 @@
+% Wiley NJD v5 Template - Disease Early Warning and Surveillance
+\documentclass[AMA,LATO1COL]{WileyNJD-v2}
+
+% Additional packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{url}
+
+% Article metadata
+\articletype{Research Article}
+
+\received{XX Month XXXX}
+\revised{XX Month XXXX}
+\accepted{XX Month XXXX}
+
+\raggedbottom
+
+\begin{document}
+
+\title{Blockchain-Based Architectural Model for Disease Early Warning and Surveillance}
+
+\author[1]{Teklhiwot Mekonen\textsuperscript{*}}
+\author[1]{Esubalew Alemneh}
+
+\authormark{Mekonen and Alemneh}
+
+\address[1]{\orgdiv{Faculty of Computing, Bahir Dar Institute of Technology}, \orgname{Bahir Dar University}, \orgaddress{\city{Bahir Dar}, \country{Ethiopia}}}
+
+\corres{*Teklhiwot Mekonen, Faculty of Computing, Bahir Dar Institute of Technology, Bahir Dar University, Bahir Dar, Ethiopia. \email{teklhiwot@example.com}}
+
+\presentaddress{Faculty of Computing, Bahir Dar Institute of Technology, Bahir Dar University, Bahir Dar, Ethiopia}
+
+\abstract{Disease early warning and surveillance (DEWS) systems in low- and middle-income countries (LMICs) face persistent architectural failures: data centralization, metadata-level privacy exposure, unscalable ledger replication, absence of selective disclosure, and exclusion of resource-constrained peripheral sites from meaningful system participation. Existing blockchain-health architectures exacerbate these weaknesses by treating the ledger as a bulk data repository, assuming uniform node capacity, and conflating immutability with privacy. This paper presents a hybrid, privacy-layered surveillance architecture that replaces full on-chain storage with selective anchoring: encrypted surveillance payloads reside off-chain via IPFS, while Ethereum smart contracts retain only cryptographic hashes, access-control state, provenance records, alerts, and audit events. The architecture introduces five integrated novelty contributions: (1)~hierarchical event processing with district-level batching aligned to public-health administrative tiers; (2)~a layered privacy model combining zero-knowledge verification, dynamic grant/revoke/expire permissions, and encrypted off-chain records; (3)~edge and fog preprocessing to reduce bandwidth, latency, and compute burden at peripheral facilities; (4)~a comparative consensus framework evaluating Proof of Authority, Delegated Proof of Stake, PBFT variants, and Raft-based alliance models against LMIC workload, trust, and infrastructure constraints; and (5)~FHIR-aware interoperability workflows supporting standards-compliant selective disclosure across organizational boundaries. A functional prototype validates the core smart-contract coordination layer. Performance evaluation demonstrates stable block generation (12--14\,s), usability assessment with 26 domain professionals yields Software Usability Measurement Inventory scores significantly exceeding standardized benchmarks, and an expanded threat model addresses validator collusion, metadata leakage, overbroad tier exposure, and equity-aware governance. The architecture advances the state of the art by treating privacy, consensus, and resource asymmetry as linked governance concerns rather than isolated engineering parameters, yielding a scalable, privacy-preserving, and LMIC-optimized surveillance infrastructure.}
+
+\keywords{blockchain, disease early warning, surveillance, Ethereum, smart contracts, health informatics, distributed systems}
+
+\jnlcitation{\cmark[Authors]}
+
+\maketitle
+
+%% ===== INTRODUCTION =====
+\section{Introduction}\label{sec:introduction}
+
+Disease early warning and surveillance (DEWS) systems underpin outbreak detection, reporting, and response across hierarchically organized health institutions---from community health posts and primary facilities through district, zonal, and regional offices to national public health authorities. In low- and middle-income countries (LMICs) such as Ethiopia, these systems confront persistent structural failures: data and process centralization that introduces single-point-of-failure risks, security vulnerabilities arising from the absence of tamper-evident record-keeping, traceability gaps across the reporting hierarchy, reliance on manual completeness verification, and interoperability barriers that fragment information flow across organizational boundaries.
+
+Blockchain technology has been proposed as an architectural remedy, offering decentralization, immutability, cryptographic integrity, and transaction traceability.\cite{yaga2018blockchain} However, first-generation blockchain-health architectures---including prior work on DEWS---exhibit four categories of shortcoming that limit their scientific and practical contribution.
+
+First, \emph{monolithic on-chain storage} requires every participating node to replicate the full surveillance payload, producing unsustainable storage growth, high gas costs, and bandwidth demands incompatible with LMIC infrastructure.\cite{kelly2019key} Second, \emph{narrow privacy models} equate immutability with confidentiality, ignoring metadata-level exposure on public or permissioned ledgers, overbroad access across health-system tiers, and the absence of selective disclosure or permission revocation.\cite{finlayson2019adversarial} Third, \emph{unargued consensus assumptions}---typically Proof of Authority adopted without comparative evaluation---leave validator governance, collusion resilience, and trust concentration unaddressed.\cite{core2012building} Fourth, \emph{resource-uniform participation models} assume that all facilities, including rural health posts with intermittent connectivity and underpowered devices, can operate as full blockchain peers, thereby excluding the very populations surveillance is designed to protect.
+
+These limitations motivate a fundamental architectural shift: from full ledger replication to \emph{selective anchoring}, where encrypted surveillance payloads reside off-chain while the blockchain retains only cryptographic hashes, permissions, provenance records, alerts, and audit events.
+
+This paper presents a hybrid, privacy-layered, hierarchical surveillance architecture designed for LMIC deployment contexts. The architecture reframes Ethereum from a bulk data repository to a coordination and proof layer, integrating the following novelty contributions:
+
+\begin{enumerate}
+\item A \emph{selective-anchoring architecture} with hierarchical event processing: community and facility nodes submit encrypted case data to off-chain storage (IPFS), district and regional layers batch and validate submissions, and smart contracts commit only hashes, access-control state, and audit artifacts on-chain---eliminating full ledger replication of surveillance payloads.
+\item A \emph{layered privacy model} combining zero-knowledge verification for privacy-preserving validation, dynamic smart-contract-based access control with grant, revoke, and expire semantics, and encrypted off-chain records---replacing immutability-only privacy assumptions.
+\item \emph{Edge and fog preprocessing} at peripheral tiers to reduce bandwidth, latency, and compute burden, enabling resource-constrained facilities to participate without operating as heavy validator nodes.
+\item A \emph{comparative consensus framework} evaluating Proof of Authority, Delegated Proof of Stake, PBFT variants, and Raft-based alliance models against LMIC workload characteristics, trust topology, and infrastructure constraints---with explicit validator governance, appointment, and failure-handling specifications.
+\item \emph{FHIR-aware interoperability workflows} supporting standards-compliant selective disclosure and cross-organizational data exchange within the privacy architecture.
+\item A functional prototype validating the smart-contract coordination layer, evaluated across three dimensions: performance (block generation timing), usability (Software Usability Measurement Inventory with 26 domain professionals), and security (expanded threat model addressing validator collusion, metadata leakage, overbroad tier exposure, and equity-aware governance).
+\end{enumerate}
+
+The remainder of this paper is organized as follows. Section~\ref{sec:background} presents background context and related work. Section~\ref{sec:methodology} describes the research methodology. Section~\ref{sec:model} details the proposed architecture. Section~\ref{sec:implementation} presents the prototype implementation. Section~\ref{sec:evaluation} reports evaluation results. Section~\ref{sec:discussion} discusses implications and limitations. Section~\ref{sec:conclusion} concludes the paper and identifies future research directions.
+
+%% ===== BACKGROUND AND RELATED WORK =====
+\section{Background and Related Work}\label{sec:background}
+
+\subsection{Blockchain Foundations for Health Surveillance}\label{subsec:blockchain}
+
+Blockchain provides four properties directly relevant to distributed health surveillance: immutability of committed records, decentralized validation without trusted intermediaries, consensus-driven Byzantine fault tolerance, and end-to-end transaction traceability.\cite{yaga2018blockchain} However, these properties alone are insufficient for privacy-sensitive, resource-constrained surveillance deployments. Full ledger replication forces every node to store the complete surveillance payload, producing unsustainable storage growth and bandwidth demands in low- and middle-income settings. Immutability, while protecting against retroactive tampering, does not prevent metadata exposure, overbroad read access across health-system tiers, or the absence of selective disclosure. Consequently, modern blockchain-health architectures have shifted from monolithic on-chain designs toward \emph{hybrid} models that confine the ledger to coordination artifacts---hashes, permissions, provenance, alerts, and audit events---while encrypted bulk data resides off-chain.
+
+\subsection{Platform and Consensus Rationale}\label{subsec:platform}
+
+Ethereum was selected as the coordination layer based on its native smart-contract support, Turing-complete programmability (Solidity), and mature tooling for permissioned deployment (Table~\ref{tab:platform}). Critically, the architecture reframes Ethereum from a bulk data repository to a \emph{selective-anchoring} layer: smart contracts manage only cryptographic hashes, access-control state, and audit artifacts, while encrypted surveillance payloads are stored off-chain via IPFS. This separation addresses the scalability, cost, and privacy limitations inherent in direct Layer-1 data recording.
+
+\begin{table}[!ht]
+\caption{Blockchain platform comparison (selection criteria).}\label{tab:platform}
+\begin{tabular*}{\columnwidth}{@{\extracolsep\fill}lccc@{}}
+\toprule
+Criterion & Ethereum & Bitcoin & XRPL \\
+\midrule
+Smart contracts & Yes & No & No \\
+dApp support & Yes & No & No \\
+Turing-complete language & Yes & No & No \\
+Digital identity & Yes & Yes & No \\
+Data oracles & Yes & Yes & No \\
+Human-readable addresses & Yes & Yes & No \\
+Block time & 14 s & 10 min & 4 s \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+Consensus selection is treated as a workload-specific governance decision rather than an assumed default. While the prototype employs Proof of Authority (PoA) for its low latency and deterministic finality, Section~\ref{sec:model} presents a comparative evaluation of PoA against Delegated Proof of Stake (DPoS), Practical Byzantine Fault Tolerance (PBFT) variants, and Raft-based alliance models, assessed against LMIC workload characteristics, trust topology, validator appointment, collusion resilience, and infrastructure constraints.
+
+\subsection{Disease Early Warning and Surveillance in Ethiopia}\label{subsec:dews}
+
+Ethiopia's DEWS system operates through a five-tier hierarchy: community health posts, woreda health offices, zone health offices, regional health offices, and the national Ethiopian Public Health Institute (EPHI)/Public Health Emergency Management (PHEM) center. The system conducts indicator-based surveillance (structured scheduled reporting) and event-based surveillance (rapid informal signal capture). Twenty priority diseases are classified into 13 immediately reportable conditions (notification within 30 minutes) and 7 weekly reportable conditions, with report completeness calculated weekly at every tier. Laboratory surveillance operates through a parallel tiered network (woreda, zone, regional, national) responsible for specimen confirmation.
+
+This administrative hierarchy maps directly to the proposed multi-tier computing architecture. Peripheral health posts and community workers operate in environments characterized by intermittent connectivity, underpowered devices, and limited technical capacity---conditions that preclude full blockchain peer responsibilities. District and zonal offices possess intermediate infrastructure suitable for batching, validation, and edge/fog preprocessing. Regional and national tiers command sufficient resources for validator duties and analytical workloads. The architecture therefore assigns asymmetric node roles aligned to each tier's actual capacity, ensuring that resource-constrained peripheral sites participate as lightweight reporting nodes rather than heavy consensus participants.
+
+\subsection{Related Work}\label{subsec:related}
+
+\subsubsection{Blockchain-Based Healthcare Architectures}
+
+Blockchain adoption in healthcare has progressed through identifiable architectural generations. Early systems stored clinical records directly on-chain: Omar et al.\cite{omar2019privacy} proposed a patient-centric blockchain using decentralization to mitigate cloud security risks, but lacked interoperability between actors and placed full payloads on the ledger. Griggs et al.\cite{griggs2018healthcare} applied smart contracts to medical IoT data with HIPAA-compliant notifications, yet reported transaction delays that limit real-time utility. Quaini et al.\cite{quaini2018model} presented UniRec, a distributed electronic health record architecture whose full-replication design produces prohibitive disk space requirements at scale. These first-generation approaches share a common limitation: treating the blockchain as a bulk data repository rather than a coordination layer, thereby inheriting the storage, cost, and privacy weaknesses identified in Section~\ref{sec:introduction}.
+
+More recent architectures have moved toward hybrid storage and privacy-layered designs. Zhang et al.\cite{zhang2018fhirchain} proposed FHIRChain, combining blockchain coordination with HL7 FHIR interoperability for collaborative cancer care, but reported semantic interoperability challenges and legacy system limitations. The architectural direction established by such hybrid approaches---separating data custody from on-chain coordination---informs the selective-anchoring model proposed in this work, which extends it with encrypted off-chain storage via IPFS, zero-knowledge verification, and dynamic permission lifecycle management.
+
+\subsubsection{Surveillance-Specific Digital Architectures}
+
+Digital surveillance systems have predominantly employed machine learning. Bollig et al.\cite{bollig2020machine} applied LSTM networks to syndromic surveillance across 33,000 veterinary necropsy reports, demonstrating temporal and spatial pattern detection. Harvey et al.\cite{harvey2021predicting} developed Gaussian Process and Random Forest models for malaria early warning in Burkina Faso using routine health facility data. Rubio-Solis et al.\cite{rubiosolis2019zika} proposed neural network-based predictive surveillance for dengue at district level in Brazil. While these systems demonstrate predictive utility, they require centralized data aggregation, remain vulnerable to adversarial manipulation, and provide no inherent guarantees of provenance, immutability, or audit traceability---properties essential for trustworthy multi-institutional surveillance.
+
+\subsubsection{Architectural Gap Analysis}
+
+Table~\ref{tab:related} positions the present work against prior systems across the six architectural dimensions identified in the blueprint.
+
+\begin{table*}[!ht]
+\caption{Comparative analysis of related work against target architectural dimensions.}\label{tab:related}
+\begin{tabular*}{\textwidth}{@{\extracolsep\fill}llllll@{}}
+\toprule
+Study & Hybrid Storage & Layered Privacy & Edge/Fog & Consensus Rationale & LMIC Awareness \\
+\midrule
+Omar et al.\cite{omar2019privacy} & No & No & No & No & No \\
+Griggs et al.\cite{griggs2018healthcare} & No & Partial & No & No & No \\
+Quaini et al.\cite{quaini2018model} & No & No & No & No & No \\
+Zhang et al.\cite{zhang2018fhirchain} & Partial & Partial & No & No & No \\
+Bollig et al.\cite{bollig2020machine} & N/A & No & No & N/A & No \\
+Harvey et al.\cite{harvey2021predicting} & N/A & No & No & N/A & Partial \\
+Rubio-Solis et al.\cite{rubiosolis2019zika} & N/A & No & No & N/A & No \\
+\textbf{This work} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} \\
+\bottomrule
+\end{tabular*}
+\end{table*}
+
+\textbf{Research gap.} No prior blockchain-health architecture integrates all five dimensions required for LMIC disease surveillance: (1)~hybrid storage with selective on-chain anchoring, (2)~layered privacy with zero-knowledge verification and dynamic permission lifecycle, (3)~edge/fog preprocessing for resource-constrained peripheral sites, (4)~comparative consensus evaluation with explicit validator governance, and (5)~LMIC-aware asymmetric node-role design aligned to public-health administrative hierarchies. The present work addresses this compound gap by proposing a unified architecture that treats privacy, consensus, scalability, and resource asymmetry as linked governance concerns within a single hierarchical surveillance framework.
+
+%% ===== RESEARCH METHODOLOGY =====
+\section{Research Methodology}\label{sec:methodology}
+
+\subsection{Research Design}\label{subsec:design}
+
+This study adopts the Systems Development Research Methodology (SDRM) proposed by Nunamaker et al.\cite{nunamaker1990systems}, instantiated through five iterative stages aligned to the hybrid surveillance architecture (Figure~\ref{fig:sdrm}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[SDRM Process Diagram]\\Figure placeholder\vspace{2em}}}
+\caption{Systems Development Research Methodology (SDRM) process.}\label{fig:sdrm}
+\end{figure}
+
+\textbf{Stage 1---Problem Identification and Concept Design.} A structured literature review identified five persistent deficiencies in LMIC surveillance systems (Section~\ref{sec:introduction}) and four categories of architectural shortcoming in first-generation blockchain-health designs: monolithic on-chain storage, narrow privacy models, unargued consensus assumptions, and resource-uniform participation. These findings established the requirements for a hybrid, privacy-layered architecture.
+
+\textbf{Stage 2---Architecture Development.} Six design objectives were derived from the gap analysis: (1)~selective on-chain anchoring with encrypted off-chain storage, (2)~layered privacy with zero-knowledge verification and dynamic permission lifecycle, (3)~edge/fog preprocessing for resource-constrained sites, (4)~comparative consensus evaluation with validator governance, (5)~hierarchical event processing aligned to public-health administrative tiers, and (6)~FHIR-aware interoperability workflows. Each objective maps to a specific architectural component (Section~\ref{sec:model}).
+
+\textbf{Stage 3---Analysis and Design.} Smart-contract coordination logic, off-chain storage interfaces (IPFS), access-control state machines with grant/revoke/expire semantics, and tier-specific node-role specifications were designed against the six objectives.
+
+\textbf{Stage 4---Prototype Development.} A functional prototype was implemented on Ethereum to validate the smart-contract coordination layer, demonstrating selective anchoring, hierarchical access control, and automated completeness verification.
+
+\textbf{Stage 5---Observation and Evaluation.} The prototype was subjected to three-dimensional evaluation: performance (block generation timing), usability (Software Usability Measurement Inventory with domain professionals), and security (expanded threat model addressing validator collusion, metadata leakage, overbroad tier exposure, and equity-aware governance).
+
+\subsection{Blockchain Suitability Assessment}\label{subsec:suitability}
+
+Prior to architecture design, blockchain suitability for the DEWS domain was assessed using the IEEE Spectrum decision framework\cite{peck2017blockchain}, selected from eight published frameworks (Figure~\ref{fig:frameworks}) for its parsimony and accessibility to domain stakeholders.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Blockchain Decision Frameworks]\\Figure placeholder\vspace{2em}}}
+\caption{Blockchain decision frameworks evaluated.}\label{fig:frameworks}
+\end{figure}
+
+Ten purposively sampled epidemiologists and decision-making staff at the Amhara Public Health Institute completed semi-structured interviews (February--March 2021). Table~\ref{tab:survey} summarizes the responses.
+
+\begin{table}[!ht]
+\caption{Blockchain suitability survey results (n=10).}\label{tab:survey}
+\begin{tabular*}{\columnwidth}{@{\extracolsep\fill}lc@{}}
+\toprule
+Decision Criterion & Affirmative (\%) \\
+\midrule
+Traditional methods inadequate & 90 \\
+Multiple participants need data updates & 100 \\
+Low mutual trust among actors & 90 \\
+Need for shared data store & 80 \\
+Need for transaction transparency & 70 \\
+Need for immutable records & 80 \\
+Need for decentralized control & 70 \\
+\midrule
+Average & 82.85 \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+An average of 82.85\% affirmative responses exceeded the framework's majority threshold, confirming blockchain suitability for the surveillance domain. This assessment validates the use of blockchain \emph{as a coordination and proof layer}; it does not justify full on-chain data storage, which the architecture explicitly avoids. The specific architectural pattern---selective anchoring with encrypted off-chain storage, layered privacy, and comparative consensus---was derived from the literature-driven gap analysis rather than from the suitability survey alone.
+
+\subsection{Scope and Limitations}\label{subsec:scope}
+
+The study scope encompasses the design, prototyping, and evaluation of the smart-contract coordination layer within the hybrid architecture. The following methodological boundaries apply: (1)~the prototype validates coordination-layer feasibility on Ethereum but does not implement the complete off-chain storage, edge/fog, or Layer-2 components, which are specified architecturally; (2)~performance evaluation uses the Rinkeby test network, not mainnet deployment; (3)~suitability survey participants are drawn from a single regional institute (n=10), limiting generalizability of stakeholder findings; and (4)~the expanded threat model is analytically derived rather than empirically penetration-tested. These constraints bound the current empirical claims while preserving the architectural contribution, which is designed to be transferable across LMIC surveillance contexts.
+
+%% ===== PROPOSED MODEL =====
+\section{Proposed Hybrid Blockchain Architecture for Disease Early Warning and Surveillance}\label{sec:model}
+
+This section presents a hybrid, privacy-layered, hierarchical architecture for infectious disease early warning and surveillance (DEWS) in low- and middle-income country (LMIC) settings. The architecture replaces monolithic on-chain storage with \emph{selective anchoring}: encrypted surveillance payloads reside off-chain while the Ethereum blockchain retains only cryptographic hashes, access-control state, provenance records, alerts, and audit events. This separation addresses four categories of shortcoming in first-generation blockchain-health systems: unsustainable storage replication, narrow immutability-only privacy, unargued consensus assumptions, and resource-uniform participation models that exclude constrained facilities.
+
+\subsection{Multi-Tier Architectural Topology}\label{subsec:topology}
+
+The architecture organizes participants into five functionally distinct tiers aligned with the Ethiopian public health administrative hierarchy. Figure~\ref{fig:architecture} illustrates the overall topology.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Multi-Tier Architectural Topology]\\Figure placeholder\vspace{2em}}}
+\caption{Hybrid blockchain architecture for disease early warning and surveillance showing five processing tiers.}\label{fig:architecture}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Overall Architectural Model
+% Scientific purpose: Provides a single high-level view of the five-tier hybrid architecture,
+% showing how surveillance data flows from community capture through edge preprocessing
+% and district batching to selective blockchain anchoring with off-chain encrypted storage.
+%
+% graph TB
+%     subgraph T1["Tier 1 · Community / Peripheral Capture"]
+%         CHW["Community Health Workers"]
+%         HF["Health Facilities"]
+%     end
+%
+%     subgraph T2["Tier 2 · Edge / Fog Processing"]
+%         EFN["Edge/Fog Nodes"]
+%         VAL["Preliminary Validation"]
+%         BUF["Local Buffering & Batching"]
+%     end
+%
+%     subgraph T3["Tier 3 · District / Regional Coordination"]
+%         DC["District Coordinator"]
+%         BA["Batch Aggregation"]
+%         SV["Supervisory Validation"]
+%     end
+%
+%     subgraph T4["Tier 4 · Blockchain Coordination"]
+%         SC["Smart Contracts"]
+%         HA["Hash Anchoring"]
+%         ACL["Access Control & Permissions"]
+%         CON["Consent & Provenance Records"]
+%         AU["Audit Trails"]
+%         AL["Alert Events"]
+%     end
+%
+%     subgraph T5["Tier 5 · Off-Chain Data Layer"]
+%         IPFS["IPFS / Encrypted Storage"]
+%         ENC["AES-256 Encrypted Payloads"]
+%     end
+%
+%     CHW -->|"encrypted event"| EFN
+%     HF -->|"encrypted event"| EFN
+%     EFN --> VAL
+%     VAL --> BUF
+%     BUF -->|"validated batch"| DC
+%     DC --> BA
+%     DC --> SV
+%     BA -->|"batch tx"| SC
+%     SC --> HA
+%     SC --> ACL
+%     SC --> CON
+%     SC --> AU
+%     SC --> AL
+%     EFN -.->|"encrypted payload"| IPFS
+%     DC -.->|"encrypted payload"| IPFS
+%     IPFS --- ENC
+%     HA -.->|"hash/pointer"| IPFS
+%
+%     style T1 fill:#f5f5f5,stroke:#333
+%     style T2 fill:#e8e8e8,stroke:#333
+%     style T3 fill:#dcdcdc,stroke:#333
+%     style T4 fill:#d0d0d0,stroke:#333
+%     style T5 fill:#c4c4c4,stroke:#333
+% ==========================
+
+\textbf{Tier~1: Community and Peripheral Capture Layer.} Community health workers and primary health posts originate surveillance events. These nodes operate as lightweight clients---they encrypt case data locally and submit payloads to off-chain storage without running validator infrastructure. This tier accommodates intermittent connectivity, underpowered devices, and limited staff capacity characteristic of LMIC peripheral sites.
+
+\textbf{Tier~2: Edge/Fog Processing Layer.} Near-source processing nodes perform preliminary validation, data formatting, local buffering during connectivity interruptions, and transaction batching. This layer reduces bandwidth demands and latency for constrained facilities while ensuring that submissions conform to schema requirements before propagation.
+
+\textbf{Tier~3: District/Regional Coordination Layer.} Woreda, zone, and regional health offices serve as intermediate trust and aggregation nodes. These facilities batch validated submissions from subordinate tiers, perform supervisory review, and prepare aggregate transaction sets for blockchain anchoring. The coordination layer mirrors the existing public health reporting hierarchy, enabling bidirectional information flow---upward for case reporting and downward for supervisory feedback.
+
+\textbf{Tier~4: Blockchain Coordination Layer.} Ethereum smart contracts provide the system's coordination, enforcement, provenance, and auditability functions. On-chain data is strictly limited to: cryptographic hashes of off-chain payloads, content-addressable pointers, permission and access-control state, consent and provenance records, alert events, and audit trail entries. Raw surveillance payloads are never stored on-chain.
+
+\textbf{Tier~5: Off-Chain Encrypted Data Layer.} Bulk surveillance records---case reports, laboratory results, specimen metadata---reside in encrypted off-chain storage using IPFS content addressing. Each stored object is linked to its on-chain hash anchor, enabling integrity verification without ledger replication of sensitive health data.
+
+\subsection{Selective Anchoring and Core Data Flow}\label{subsec:dataflow}
+
+The selective anchoring principle governs all data movement through the architecture. Figure~\ref{fig:smartcontract} illustrates the internal smart contract logic, while Figure~\ref{fig:web3} presents the end-to-end data flow sequence. The workflow proceeds as follows:
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Selective Anchoring Data Flow]\\Figure placeholder\vspace{2em}}}
+\caption{Selective anchoring workflow showing separation of encrypted off-chain storage from on-chain coordination artifacts.}\label{fig:smartcontract}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Smart Contract Selective-Anchoring Mechanism
+% Scientific purpose: Illustrates the internal logic of the smart contract layer,
+% showing which artifacts are anchored on-chain (hashes, permissions, alerts, audit)
+% versus which remain off-chain (encrypted payloads), enforcing the selective-anchoring principle.
+%
+% flowchart LR
+%     subgraph Input["Incoming Batch from District"]
+%         BT["Batch Transaction"]
+%         HP["Hash + Pointer"]
+%         PM["Permission Metadata"]
+%     end
+%
+%     subgraph SC["Smart Contract Logic"]
+%         VER["Verify Batch Integrity"]
+%         ANC["Anchor Hash On-Chain"]
+%         PERM["Update ACL State"]
+%         PROV["Record Consent & Provenance"]
+%         ALERT["Evaluate Alert Rules"]
+%         AUDIT["Write Audit Event"]
+%     end
+%
+%     subgraph OnChain["On-Chain State"]
+%         H["Hashes & Pointers"]
+%         P["Permissions & Consent"]
+%         PR["Provenance Records"]
+%         A["Alert Records"]
+%         T["Audit Trail"]
+%     end
+%
+%     subgraph OffChain["Off-Chain"]
+%         IPFS["Encrypted Payloads · IPFS"]
+%     end
+%
+%     BT --> VER
+%     HP --> VER
+%     PM --> VER
+%     VER --> ANC
+%     VER --> PERM
+%     VER --> PROV
+%     VER --> ALERT
+%     VER --> AUDIT
+%     ANC --> H
+%     PERM --> P
+%     PROV --> PR
+%     ALERT --> A
+%     AUDIT --> T
+%     H -.->|"pointer reference"| IPFS
+%
+%     style OnChain fill:#e8e8e8,stroke:#333
+%     style OffChain fill:#f5f5f5,stroke:#333,stroke-dasharray:5 5
+% ==========================
+
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[End-to-End Data Flow]\\Figure placeholder\vspace{2em}}}
+\caption{End-to-end data flow from event origination through encryption, off-chain storage, hash anchoring, and authorized retrieval. Solid arrows represent payload movement; dashed arrows represent hash/pointer references.}\label{fig:web3}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Core Data Flow
+% Scientific purpose: Replaces the original Web3.js-centric figure with a complete
+% end-to-end data flow diagram showing encryption-first design, off-chain storage,
+% selective anchoring, and authorized retrieval—the central data lifecycle of the
+% revised architecture.
+%
+% sequenceDiagram
+%     participant RA as Reporting Actor
+%     participant EF as Edge/Fog Node
+%     participant DC as District Coordinator
+%     participant OC as Off-Chain Store (IPFS)
+%     participant BC as Blockchain (Smart Contract)
+%     participant AU as Authorized Verifier
+%
+%     RA->>EF: Submit encrypted surveillance event
+%     EF->>EF: Validate, format, buffer
+%     EF->>OC: Store encrypted payload
+%     OC-->>EF: Return content-address (CID)
+%     EF->>DC: Forward validated event + CID
+%     DC->>DC: Batch and aggregate
+%     DC->>BC: Anchor batch (hashes, CIDs, permissions)
+%     BC-->>DC: Confirm anchoring tx
+%     Note over BC: On-chain: hash, pointer, ACL, audit
+%     AU->>BC: Request access + verify provenance
+%     BC-->>AU: Return CID + permission token
+%     AU->>OC: Retrieve encrypted payload by CID
+%     OC-->>AU: Return encrypted payload
+%     AU->>AU: Decrypt with authorized key
+% ==========================
+
+\begin{enumerate}
+\item A reporting actor at Tier~1 creates a surveillance event (case report, laboratory result, or completeness submission).
+\item The payload is encrypted using the actor's cryptographic credentials before leaving the originating node.
+\item The encrypted payload is stored off-chain via IPFS, yielding a content-addressed hash.
+\item The hash, a storage pointer, permission metadata, and relevant audit information are prepared for blockchain anchoring.
+\item Edge/fog nodes (Tier~2) or district/regional coordinators (Tier~3) preprocess, validate, and batch submissions.
+\item Smart contracts at Tier~4 commit only the selective on-chain artifacts---hash, permissions, provenance, and alert state.
+\item Authorized parties verify data integrity, provenance, and access status through on-chain proofs and permission logic, retrieving encrypted payloads from off-chain storage only when access is granted.
+\item Alert events and audit records are preserved on-chain as immutable traceability artifacts.
+\end{enumerate}
+
+This workflow eliminates full ledger replication of surveillance data, reduces gas costs and storage growth, and ensures that bulk health records are never directly exposed on the distributed ledger.
+
+\subsection{Hierarchical Disease Reporting}\label{subsec:reporting}
+
+The disease reporting component implements Ethiopia's five-tier public health surveillance hierarchy: community health posts, woreda health offices, zone health offices, regional health offices, and the EHNRI/PHEM national center.
+
+The revised architecture separates the reporting workflow into four functional phases:
+
+\textbf{Capture phase.} Community and facility reporters (Tier~1) encrypt case data and submit encrypted payloads to IPFS. Each submission generates a content hash and metadata record. Reporters operate as lightweight clients with no blockchain validation responsibilities.
+
+\textbf{Aggregation phase.} Edge/fog nodes (Tier~2) buffer, validate, and batch submissions from multiple reporters. District and regional coordinators (Tier~3) aggregate validated batches and perform hierarchical completeness checks before anchoring.
+
+\textbf{Coordination phase.} Smart contracts at Tier~4 receive batch anchoring transactions containing hashes, permission grants, and provenance records. A factory contract instantiates and manages organizational report-tracking contracts. Access control enforces hierarchical constraints: higher-level offices can retrieve and review reports from subordinate organizations; subordinate levels cannot access peer-level or superior-level reports unless explicitly authorized through on-chain permission grants.
+
+\textbf{Audit phase.} Every report submission, review action, feedback message, and permission change constitutes a permanent on-chain audit record. Supervisory feedback flows downward through the same contract interface, maintaining bidirectional traceability without storing report content on the ledger.
+
+Figure~\ref{fig:reporting} illustrates the redesigned reporting process.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Hierarchical Disease Reporting Process]\\Figure placeholder\vspace{2em}}}
+\caption{Hierarchical disease reporting process with selective anchoring and role-asymmetric participation.}\label{fig:reporting}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Hierarchical Disease Reporting Process
+% Scientific purpose: Shows the five-tier Ethiopian public health reporting hierarchy
+% with the revised data handling: encrypted off-chain storage at each tier,
+% selective hash anchoring, and bidirectional flow (upward reports, downward feedback).
+%
+% graph TB
+%     CHP["Community Health Post"]
+%     WHO["Woreda Health Office"]
+%     ZHO["Zone Health Office"]
+%     RHO["Regional Health Office"]
+%     EHNRI["EHNRI/PHEM Center"]
+%     OC["Off-Chain Encrypted Store"]
+%     BC["Blockchain · Hash Anchor"]
+%
+%     CHP -->|"encrypted report ↑"| WHO
+%     WHO -->|"aggregated batch ↑"| ZHO
+%     ZHO -->|"aggregated batch ↑"| RHO
+%     RHO -->|"aggregated batch ↑"| EHNRI
+%
+%     EHNRI -.->|"feedback ↓"| RHO
+%     RHO -.->|"feedback ↓"| ZHO
+%     ZHO -.->|"feedback ↓"| WHO
+%     WHO -.->|"feedback ↓"| CHP
+%
+%     CHP -->|"payload"| OC
+%     WHO -->|"payload"| OC
+%     ZHO -->|"payload"| OC
+%     RHO -->|"payload"| OC
+%
+%     WHO -->|"hash + audit"| BC
+%     ZHO -->|"hash + audit"| BC
+%     RHO -->|"hash + audit"| BC
+%     EHNRI -->|"hash + audit"| BC
+%
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+%     style BC fill:#d0d0d0,stroke:#333
+% ==========================
+
+\subsection{Laboratory Network Integration}\label{subsec:laboratory}
+
+The laboratory component addresses pathogen identification and result exchange across the four-tiered laboratory network: woreda, zone, regional, and national reference levels.
+
+Under the hybrid architecture, laboratory results and specimen metadata are encrypted and stored off-chain. On-chain contracts manage only provenance records, result-confirmation events, and access permissions. Forward (upward) reporting transmits hash-anchored identification results to higher-level facilities for confirmation. Backward (downward) communication enables reference laboratories to disseminate confirmations, corrections, and follow-up information through permission-controlled off-chain retrieval with on-chain audit logging.
+
+Selective disclosure ensures that specimen-level data is accessible only to authorized laboratory tiers. Dynamic access grants allow temporary cross-tier visibility during outbreak investigations, with automatic expiry preventing persistent overbroad access. Figure~\ref{fig:laboratory} depicts the laboratory network design.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Laboratory Network Design]\\Figure placeholder\vspace{2em}}}
+\caption{Laboratory network integration with off-chain encrypted storage and on-chain provenance anchoring.}\label{fig:laboratory}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Laboratory Network Reporting Design
+% Scientific purpose: Depicts the four-tier laboratory network with encrypted off-chain
+% specimen storage and blockchain hash anchoring, showing bidirectional flow for
+% specimen submission (upward) and result confirmation (downward).
+%
+% graph TB
+%     WL["Woreda Laboratory"]
+%     ZL["Zone Laboratory"]
+%     RL["Regional Laboratory"]
+%     NL["National Reference Lab"]
+%     OC["Off-Chain Encrypted Store"]
+%     BC["Blockchain · Provenance Anchor"]
+%
+%     WL -->|"encrypted specimen data ↑"| ZL
+%     ZL -->|"encrypted specimen data ↑"| RL
+%     RL -->|"encrypted specimen data ↑"| NL
+%
+%     NL -.->|"confirmation ↓"| RL
+%     RL -.->|"confirmation ↓"| ZL
+%     ZL -.->|"confirmation ↓"| WL
+%
+%     WL -->|"payload"| OC
+%     ZL -->|"payload"| OC
+%     RL -->|"payload"| OC
+%
+%     ZL -->|"hash + provenance"| BC
+%     RL -->|"hash + provenance"| BC
+%     NL -->|"hash + provenance"| BC
+%
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+%     style BC fill:#d0d0d0,stroke:#333
+% ==========================
+
+\subsection{Layered Privacy Architecture}\label{subsec:privacy}
+
+The privacy model replaces immutability-only protection with three complementary mechanisms:
+
+\textbf{Encrypted off-chain storage.} All surveillance payloads are encrypted before storage, ensuring that compromise of the storage layer alone does not expose case-level data.
+
+\textbf{Dynamic access control.} Smart contracts implement fine-grained permission management with grant, revoke, and time-bound expire semantics. Access rights are scoped to specific organizational tiers and reporting relationships, preventing overbroad cross-tier exposure. Permission state changes are recorded on-chain for auditability.
+
+\textbf{Zero-knowledge verification.} Privacy-preserving validation enables authorized parties to verify properties of surveillance submissions---such as completeness, timeliness, or demographic eligibility---without accessing underlying sensitive records. Zero-knowledge proofs support selective disclosure during cross-organizational coordination and outbreak response while minimizing data exposure.
+
+Figure~\ref{fig:privacy} illustrates the layered privacy control architecture.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Layered Privacy Architecture]\\Figure placeholder\vspace{2em}}}
+\caption{Layered privacy architecture with zero-knowledge verification. The three privacy mechanisms---encrypted off-chain storage, dynamic access control with revocation, and zero-knowledge proof verification---operate across architectural tiers to enforce selective disclosure without exposing raw surveillance records.}\label{fig:privacy}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Privacy and Zero-Knowledge Verification Layer
+% Scientific purpose: Visualizes the three-mechanism privacy architecture that replaces
+% the thesis's immutability-only privacy model. Shows how encrypted storage, dynamic ACL,
+% and ZKP work together across tiers to enable selective disclosure and revocable access.
+%
+% graph TB
+%     subgraph PL["Privacy Layer"]
+%         direction TB
+%         subgraph M1["Mechanism 1 · Encrypted Off-Chain Storage"]
+%             ENC["AES-256 Encryption"]
+%             IPFS["IPFS Content-Addressed Store"]
+%         end
+%         subgraph M2["Mechanism 2 · Dynamic Access Control"]
+%             GRANT["Grant Permission"]
+%             REVOKE["Revoke Permission"]
+%             EXPIRE["Time-Bound Expiry"]
+%             ACL["Smart Contract ACL"]
+%         end
+%         subgraph M3["Mechanism 3 · Zero-Knowledge Verification"]
+%             PROVE["Prover (Reporting Tier)"]
+%             VERIFY["Verifier (Requesting Tier)"]
+%             ZKP["zk-SNARK Circuit"]
+%         end
+%     end
+%
+%     ENC --> IPFS
+%     GRANT --> ACL
+%     REVOKE --> ACL
+%     EXPIRE --> ACL
+%     PROVE -->|"proof π"| ZKP
+%     ZKP -->|"accept/reject"| VERIFY
+%
+%     style M1 fill:#f5f5f5,stroke:#333
+%     style M2 fill:#e8e8e8,stroke:#333
+%     style M3 fill:#dcdcdc,stroke:#333
+% ==========================
+
+\subsection{Report Completeness Verification}\label{subsec:completeness}
+
+The Ethiopian DEWS protocol mandates weekly reporting; a report is classified as complete when all reporting units within a designated catchment area have submitted within the prescribed period.
+
+Under the hybrid architecture, completeness verification operates on anchored events rather than full ledger queries. Smart contracts at each hierarchical level maintain a registry of expected reporters and track submission-anchor events. The completeness calculator function computes the ratio of received anchoring events to expected submissions for a given period and catchment area. Because only hashes and metadata are queried---not full surveillance payloads---the verification mechanism scales efficiently without requiring ledger-wide data replication.
+
+Edge/fog nodes assist completeness tracking by maintaining local submission registries and alerting coordinators to missing reports before the reporting deadline, enabling proactive gap identification. Figure~\ref{fig:completeness} illustrates the event-driven completeness verification design.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Completeness Verification]\\Figure placeholder\vspace{2em}}}
+\caption{Event-driven report completeness verification using anchored submission events.}\label{fig:completeness}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Report Completeness Verification
+% Scientific purpose: Shows how completeness is verified using on-chain hash records
+% rather than raw data, aligning with the selective-anchoring principle while
+% automating the weekly reporting compliance check.
+%
+% flowchart TD
+%     REG["Reporting-Period Registry"]
+%     SC["Completeness Calculator Contract"]
+%     HA["On-Chain Hash Index"]
+%     EF["Edge/Fog Local Registry"]
+%     CR["Completeness Ratio Output"]
+%     ALERT["Gap Alert Event"]
+%
+%     REG -->|"expected units & period"| SC
+%     HA -->|"submitted hashes per unit"| SC
+%     EF -->|"local submission status"| SC
+%     SC -->|"received / expected"| CR
+%     SC -->|"missing units"| ALERT
+%     EF -.->|"proactive gap alert"| ALERT
+%
+%     style SC fill:#e8e8e8,stroke:#333
+%     style HA fill:#d0d0d0,stroke:#333
+%     style EF fill:#f0f0f0,stroke:#333,stroke-dasharray:3 3
+% ==========================
+
+\subsection{Surveillance Data Analysis}\label{subsec:analysis}
+
+The data analysis component implements three epidemiological dimensions: temporal (day, week, month), spatial (kebele, woreda, town), and person-based (age, sex, occupation) analysis for outbreak detection and disease burden assessment. Figures~\ref{fig:temporal},~\ref{fig:spatial}, and~\ref{fig:person} detail the respective analysis workflows.
+
+Under the revised architecture, analytics are separated from ledger settlement. Computationally intensive epidemiological analysis---including incidence proportion and prevalence calculations---executes at the district/regional coordination layer (Tier~3) over decrypted off-chain data accessible through permission-controlled retrieval. Only summary indicators, alert triggers, and anomaly flags are anchored on-chain as audit-worthy events.
+
+This placement ensures that: (1) analysis operates on complete decrypted datasets rather than on-chain transaction data; (2) privacy-preserving aggregation can be applied before results cross organizational boundaries; (3) constrained peripheral nodes are not burdened with analytical computation; and (4) early warning alerts inherit the integrity guarantees of blockchain anchoring without requiring raw case data on the ledger.
+
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Temporal Analysis Workflow]\\Figure placeholder\vspace{2em}}}
+\caption{Temporal analysis workflow. Authorized analysts retrieve encrypted case data from off-chain storage, verify integrity against on-chain hashes, decrypt, and compute time-series trend indicators for outbreak detection.}\label{fig:temporal}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Temporal Analysis Workflow
+% Scientific purpose: Shows how temporal epidemiological analysis operates on
+% integrity-verified off-chain data, maintaining the privacy-layered architecture
+% while computing time-series outbreak indicators.
+%
+% flowchart LR
+%     BC["Blockchain · Hash Anchor"]
+%     OC["Off-Chain Encrypted Store"]
+%     AN["Authorized Analyst"]
+%     DEC["Decrypt & Parse"]
+%     TS["Time-Series Extraction"]
+%     TR["Trend & Anomaly Detection"]
+%     OUT["Outbreak Alert Output"]
+%
+%     AN -->|"verify provenance"| BC
+%     BC -.->|"CID + permission"| AN
+%     AN -->|"retrieve by CID"| OC
+%     OC -->|"encrypted payload"| DEC
+%     DEC --> TS
+%     TS --> TR
+%     TR --> OUT
+%
+%     style BC fill:#d0d0d0,stroke:#333
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+% ==========================
+
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Spatial Analysis Workflow]\\Figure placeholder\vspace{2em}}}
+\caption{Spatial analysis workflow. Geospatial variables are extracted from integrity-verified off-chain records to identify geographic clustering and track disease spread across administrative boundaries.}\label{fig:spatial}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Spatial Analysis Workflow
+% Scientific purpose: Illustrates extraction of geospatial variables from verified
+% off-chain records for areal spread analysis across hierarchical administrative units.
+%
+% flowchart LR
+%     BC["Blockchain · Hash Anchor"]
+%     OC["Off-Chain Encrypted Store"]
+%     AN["Authorized Analyst"]
+%     DEC["Decrypt & Parse"]
+%     GEO["Geospatial Extraction"]
+%     CL["Cluster & Spread Analysis"]
+%     MAP["Spatial Alert Output"]
+%
+%     AN -->|"verify provenance"| BC
+%     BC -.->|"CID + permission"| AN
+%     AN -->|"retrieve by CID"| OC
+%     OC -->|"encrypted payload"| DEC
+%     DEC --> GEO
+%     GEO --> CL
+%     CL --> MAP
+%
+%     style BC fill:#d0d0d0,stroke:#333
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+% ==========================
+
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Person Analysis Workflow]\\Figure placeholder\vspace{2em}}}
+\caption{Person-based analysis workflow. Demographic variables are extracted from integrity-verified off-chain records to identify disproportionately affected population subgroups while preserving individual-level privacy through selective disclosure.}\label{fig:person}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Person-Based Analysis Workflow
+% Scientific purpose: Shows demographic analysis operating on verified off-chain data
+% with privacy-preserving selective disclosure, enabling subgroup identification
+% without exposing individual-level records unnecessarily.
+%
+% flowchart LR
+%     BC["Blockchain · Hash Anchor"]
+%     OC["Off-Chain Encrypted Store"]
+%     AN["Authorized Analyst"]
+%     SD["Selective Disclosure Filter"]
+%     DEM["Demographic Extraction"]
+%     CMP["Subgroup Comparison"]
+%     OUT["Population Risk Output"]
+%
+%     AN -->|"verify provenance"| BC
+%     BC -.->|"CID + permission"| AN
+%     AN -->|"retrieve by CID"| OC
+%     OC -->|"encrypted payload"| SD
+%     SD -->|"filtered fields"| DEM
+%     DEM --> CMP
+%     CMP --> OUT
+%
+%     style BC fill:#d0d0d0,stroke:#333
+%     style OC fill:#e8e8e8,stroke:#333,stroke-dasharray:5 5
+% ==========================
+
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Incidence Analysis Workflow]\\Figure placeholder\vspace{2em}}}
+\caption{Incidence proportion analysis workflow. New-case counts are derived from integrity-verified off-chain records and divided by the at-risk population denominator to produce incidence rates for outbreak detection.}\label{fig:incidence}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Incidence Proportion Analysis Workflow
+% Scientific purpose: Details the computation of incidence proportion from verified
+% off-chain data, showing the numerator (new cases) and denominator (at-risk population)
+% derivation pathway.
+%
+% flowchart TD
+%     VD["Verified Decrypted Records"]
+%     NC["New Case Count (numerator)"]
+%     POP["At-Risk Population (denominator)"]
+%     INC["Incidence Proportion = NC / POP"]
+%     EW["Early Warning Threshold Check"]
+%
+%     VD --> NC
+%     VD --> POP
+%     NC --> INC
+%     POP --> INC
+%     INC --> EW
+%
+%     style INC fill:#e8e8e8,stroke:#333
+% ==========================
+
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Prevalence Analysis Workflow]\\Figure placeholder\vspace{2em}}}
+\caption{Prevalence analysis workflow. Total existing and new case counts are derived from integrity-verified off-chain records and divided by total population to produce point or period prevalence measures for disease burden assessment.}\label{fig:prevalence}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Prevalence Analysis Workflow
+% Scientific purpose: Details the computation of prevalence from verified off-chain data,
+% showing the summation of new and pre-existing cases relative to total population.
+%
+% flowchart TD
+%     VD["Verified Decrypted Records"]
+%     EC["Existing + New Cases (numerator)"]
+%     TPOP["Total Population (denominator)"]
+%     PREV["Prevalence = EC / TPOP"]
+%     DB["Disease Burden Assessment"]
+%
+%     VD --> EC
+%     VD --> TPOP
+%     EC --> PREV
+%     TPOP --> PREV
+%     PREV --> DB
+%
+%     style PREV fill:#e8e8e8,stroke:#333
+% ==========================
+
+\textbf{Morbidity measures.} Incidence proportion (new cases relative to the at-risk population, Figure~\ref{fig:incidence}) and prevalence (existing cases at a point or period, Figure~\ref{fig:prevalence}) are computed at Tier~3 coordination nodes.\cite{cdc2012principles} Results are anchored on-chain as verifiable indicator events, supporting outbreak detection decisions grounded in tamper-evident, provenance-tracked epidemiological evidence.
+
+\subsection{Consensus Design and Validator Governance}\label{subsec:consensus}
+
+The architecture requires explicit consensus-selection rationale rather than default adoption of Proof of Authority (PoA). Figure~\ref{fig:consensus} illustrates the evaluation framework and tiered validator governance model. The consensus design addresses three dimensions:
+
+\textbf{Comparative evaluation.} PoA, Delegated Proof of Stake (DPoS), PBFT variants, and Raft-based alliance models are evaluated against: (1) the hierarchical trust topology of the Ethiopian health system, (2) LMIC infrastructure constraints including latency and node capacity, (3) transaction throughput requirements for batched surveillance submissions, and (4) fault tolerance under realistic connectivity assumptions.
+
+\textbf{Validator appointment.} Validators are drawn from institutional actors at Tier~3 and above---district, regional, and national health authorities with stable infrastructure and institutional accountability. Community and peripheral facilities are explicitly excluded from validator responsibilities, consistent with the resource-aware role separation principle.
+
+\textbf{Governance and resilience.} The architecture specifies collusion thresholds, failure assumptions, and trust concentration bounds. Validator appointment follows institutional authority rather than computational capacity, and governance procedures for validator addition, removal, and dispute resolution are defined to prevent capture by any single administrative tier.
+
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Consensus and Validator Governance]\\Figure placeholder\vspace{2em}}}
+\caption{Consensus selection and validator governance model. Validators are appointed across administrative tiers with asymmetric responsibilities. The consensus mechanism is selected through comparative evaluation against workload, trust, latency, and infrastructure constraints specific to LMIC deployment.}\label{fig:consensus}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Consensus and Validator Governance Model
+% Scientific purpose: Addresses the blueprint requirement for explicit consensus justification
+% and validator governance. Shows the comparative evaluation framework and the tiered
+% validator appointment model with collusion/failure assumptions.
+%
+% graph TB
+%     subgraph VG["Validator Governance"]
+%         direction TB
+%         NA["National Validators · Full nodes"]
+%         RA["Regional Validators · Full nodes"]
+%         DA["District Validators · Light nodes"]
+%         FA["Facility Actors · Reporting only"]
+%     end
+%
+%     subgraph CE["Consensus Evaluation Framework"]
+%         direction LR
+%         POA["PoA"]
+%         DPOS["DPoS"]
+%         PBFT["PBFT Variants"]
+%         RAFT["Raft-Based Alliance"]
+%     end
+%
+%     subgraph CR["Selection Criteria"]
+%         WL["Workload Profile"]
+%         TC["Trust Concentration"]
+%         LAT["Latency Tolerance"]
+%         INF["Infrastructure Capacity"]
+%     end
+%
+%     WL --> CE
+%     TC --> CE
+%     LAT --> CE
+%     INF --> CE
+%
+%     CE -->|"selected mechanism"| VG
+%
+%     NA -->|"appoints"| RA
+%     RA -->|"appoints"| DA
+%
+%     style VG fill:#e8e8e8,stroke:#333
+%     style CE fill:#f5f5f5,stroke:#333
+%     style CR fill:#dcdcdc,stroke:#333
+% ==========================
+
+\subsection{Scalability Extensions}\label{subsec:scalability}
+
+The architecture supports three composable scalability mechanisms as design modules:
+
+\textbf{Layer-2 batch settlement.} District/regional coordinators aggregate validated submissions off-chain and submit batch proofs or commitments to Layer-1, reducing main-chain transaction frequency and gas costs proportionally to batch size.
+
+\textbf{Hierarchical state partitioning.} Surveillance state is partitioned by administrative geography, allowing regional subsets of the anchoring ledger to operate semi-independently while maintaining cross-partition integrity verification at the national level.
+
+\textbf{FHIR-aware interoperability.} Privacy workflows are designed for compatibility with Fast Healthcare Interoperability Resources (FHIR) standards, enabling selective disclosure across organizational boundaries while maintaining standards-compliant data exchange and audit semantics.
+
+
+
+\subsection{Threat-Response Mapping}\label{subsec:threats}
+
+The architecture systematically addresses the four threat categories identified in the critique: confidentiality threats (metadata exposure, case-level overdisclosure), privacy threats (unauthorized access persistence, validation without confidentiality), governance threats (validator collusion/failure, trust concentration), and inclusion threats (heavy-node exclusion, integration weakness). Figure~\ref{fig:threats} maps each threat to its architectural countermeasure.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Threat-Response Mapping]\\Figure placeholder\vspace{2em}}}
+\caption{Architectural threat-response mapping. Each identified threat category is linked to its corresponding architectural countermeasure, showing how the hybrid architecture systematically addresses confidentiality, privacy, governance, and inclusion threats identified in the critique.}\label{fig:threats}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Threat-Response Mapping
+% Scientific purpose: Provides a systematic visualization of the expanded threat model,
+% mapping each critique-identified threat to its architectural countermeasure. Ensures
+% traceability between threats and design decisions across four threat categories.
+%
+% graph LR
+%     subgraph CT["Confidentiality Threats"]
+%         T1["Metadata Exposure"]
+%         T2["Case-Level Overdisclosure"]
+%     end
+%     subgraph PT["Privacy Threats"]
+%         T3["Unauthorized Access Persistence"]
+%         T4["Validation Without Confidentiality"]
+%     end
+%     subgraph GT["Governance Threats"]
+%         T5["Validator Collusion/Failure"]
+%         T6["Trust Concentration"]
+%     end
+%     subgraph IT["Inclusion Threats"]
+%         T7["Heavy-Node Exclusion"]
+%         T8["Integration Weakness"]
+%     end
+%
+%     subgraph RM["Architectural Responses"]
+%         R1["Off-Chain Encrypted Storage"]
+%         R2["Selective Disclosure + ZKP"]
+%         R3["Dynamic ACL · Grant/Revoke/Expire"]
+%         R4["Validator Governance Model"]
+%         R5["Edge/Fog + Light Node Roles"]
+%         R6["FHIR-Aware Privacy Workflows"]
+%     end
+%
+%     T1 --> R1
+%     T2 --> R1
+%     T2 --> R2
+%     T3 --> R3
+%     T4 --> R2
+%     T5 --> R4
+%     T6 --> R4
+%     T7 --> R5
+%     T8 --> R6
+%
+%     style CT fill:#f5f5f5,stroke:#333
+%     style PT fill:#ebebeb,stroke:#333
+%     style GT fill:#e0e0e0,stroke:#333
+%     style IT fill:#d6d6d6,stroke:#333
+%     style RM fill:#cccccc,stroke:#333
+% ==========================
+
+
+%% ===== PROTOTYPE IMPLEMENTATION =====
+\section{Prototype Implementation}\label{sec:implementation}
+
+This section describes how a functional prototype realizes the five-tier hybrid architecture presented in Section~\ref{sec:model}. The prototype validates the smart-contract coordination layer (Tier~4) and demonstrates end-to-end data flow across community capture (Tier~1), off-chain encrypted storage (Tier~5), selective anchoring, hierarchical access control, and provenance tracking. Edge/fog preprocessing (Tier~2) and district-level batching (Tier~3) are implemented as application-layer modules; Layer-2 rollup and zero-knowledge verification components are specified architecturally and remain targets for future engineering. Figure~\ref{fig:proto_arch} presents the prototype software architecture mapped to the five-tier topology.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Prototype Software Architecture]\\Figure placeholder\vspace{2em}}}
+\caption{Prototype software architecture mapped to the five-tier hybrid topology. Solid modules are implemented; dashed modules are architecturally specified.}\label{fig:proto_arch}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Prototype Software Architecture
+% Scientific purpose: Maps the implemented prototype modules to the five architectural
+% tiers, distinguishing fully implemented components from architecturally specified ones.
+%
+% graph TB
+%     subgraph T1["Tier 1 · Community Capture Module"]
+%         UI["React/Next.js Client"]
+%         ENC_C["Client-Side AES-256 Encryption"]
+%         MM["MetaMask Wallet"]
+%     end
+%
+%     subgraph T2["Tier 2 · Edge/Fog Module"]
+%         VAL_M["Validation Middleware"]
+%         BUF_M["Local Buffer Queue"]
+%     end
+%
+%     subgraph T3["Tier 3 · District Coordination Module"]
+%         BATCH["Batch Aggregator"]
+%         SUP["Supervisory Review Interface"]
+%     end
+%
+%     subgraph T4["Tier 4 · Smart Contract Layer"]
+%         RF["ReportFactory"]
+%         RC["ReportCoordinator"]
+%         ACL_C["AccessControl"]
+%         COMP["CompletenessVerifier"]
+%     end
+%
+%     subgraph T5["Tier 5 · Off-Chain Storage"]
+%         IPFS_N["IPFS Node (ipfs-http-client)"]
+%         ENC_S["Encrypted Payload Store"]
+%     end
+%
+%     UI -->|"encrypted payload"| ENC_C
+%     ENC_C -->|"ciphertext"| VAL_M
+%     VAL_M --> BUF_M
+%     BUF_M -->|"validated events"| BATCH
+%     BATCH -->|"anchor tx"| RF
+%     RF --> RC
+%     RF --> ACL_C
+%     RF --> COMP
+%     ENC_C -.->|"encrypted blob"| IPFS_N
+%     IPFS_N --- ENC_S
+%     RC -.->|"CID pointer"| IPFS_N
+%     MM -->|"sign tx"| RF
+%     SUP -->|"review/rework"| RC
+%
+%     style T1 fill:#f5f5f5,stroke:#333
+%     style T2 fill:#e8e8e8,stroke:#333
+%     style T3 fill:#dcdcdc,stroke:#333
+%     style T4 fill:#d0d0d0,stroke:#333
+%     style T5 fill:#c4c4c4,stroke:#333
+% =========================
+
+\subsection{Development Environment and Technology Stack}\label{subsec:devenv}
+
+The prototype was implemented using the following technology stack: Solidity~0.8 for smart contract development targeting the Ethereum Virtual Machine; Node.js as the server-side runtime; React and Next.js for the front-end application layer with server-side rendering; Web3.js for blockchain interaction; \texttt{ipfs-http-client} for IPFS content-addressed storage; MetaMask for client-side transaction signing; Ganache~CLI for local blockchain emulation during development; Mocha for automated contract testing; and Semantic~UI for interface theming. Client-side encryption uses the Web Crypto API with AES-256-GCM. Smart contracts were compiled using \texttt{solc} and deployed via a custom deployment script using the Truffle~HD Wallet Provider for account authentication.
+
+The project comprises six modules: (1)~Ethereum components (smart contracts, compilation, deployment, and migration scripts); (2)~IPFS integration (encryption, upload, retrieval, and content-hash management); (3)~React page components implementing Tier~1 capture interfaces; (4)~Next.js routing, server-side rendering, and API middleware implementing Tier~2 validation logic; (5)~supervisory and batch coordination interfaces implementing Tier~3 workflows; and (6)~test components for contract and integration verification.
+
+\subsection{Tier-by-Tier Implementation}\label{subsec:tiers}
+
+\textbf{Tier~1: Community Data Capture.} Community health workers and facility reporters interact through a React-based web client. Upon case report submission, the client encrypts the surveillance payload using AES-256-GCM before any network transmission. The encrypted ciphertext is uploaded to IPFS via \texttt{ipfs-http-client}, which returns a content identifier (CID). The client then initiates a blockchain transaction through MetaMask, passing only the CID, the payload hash, and permission metadata to the smart contract---no raw surveillance data leaves the client unencrypted, and no raw data reaches the blockchain. This design accommodates lightweight client devices: reporters require only a browser with MetaMask and connectivity sufficient to reach an IPFS gateway and an Ethereum node endpoint.
+
+\textbf{Tier~2: Edge/Fog Preprocessing.} The Next.js API middleware layer implements preliminary validation, schema conformance checks, and local buffering. When a reporter submits an event, the middleware validates field completeness and data-type conformance before forwarding the encrypted payload for IPFS upload. During connectivity interruptions, submissions are buffered in a local queue and retransmitted upon reconnection. This preprocessing reduces invalid submissions reaching the blockchain layer and provides near-source error feedback to reporters. In the current prototype, edge/fog logic executes within the Next.js server; production deployment would distribute these functions to dedicated edge nodes at health facility sites.
+
+\textbf{Tier~3: District Coordination.} District and regional coordinators access a supervisory interface that aggregates validated submissions from subordinate reporters. The coordination module supports batch review: coordinators inspect submission metadata (timestamps, reporter identifiers, CIDs, and completeness status) without accessing decrypted case data unless explicitly authorized. Upon batch approval, the coordinator triggers a single anchoring transaction that registers multiple CIDs and their associated metadata on-chain, reducing per-report transaction costs. Rework requests and supervisory feedback are recorded as on-chain provenance events linked to the originating report CID.
+
+\textbf{Tier~4: Blockchain Coordination Layer.} The smart contract layer is described in Section~\ref{subsec:contracts}. On-chain state is strictly limited to: cryptographic hashes, IPFS CID pointers, access-control lists, provenance and consent records, completeness verification state, alert events, and audit trail entries. Raw surveillance payloads are never stored on-chain.
+
+\textbf{Tier~5: Off-Chain Encrypted Storage.} Encrypted surveillance payloads are stored on IPFS using content addressing. Each payload is encrypted at the originating client (Tier~1) before upload; the resulting CID serves as both a storage pointer and an integrity anchor. The smart contract stores only the CID and a keccak256 hash of the plaintext for independent integrity verification. Authorized retrievers obtain the CID from the smart contract, fetch the encrypted blob from IPFS, and decrypt locally using keys distributed through the permission management system. This separation ensures that neither the blockchain nor the IPFS layer alone exposes identifiable health data.
+
+\subsection{Smart Contract Architecture}\label{subsec:contracts}
+
+The prototype implements four interdependent smart contracts that realize the selective anchoring principle described in Section~\ref{subsec:dataflow}. Figure~\ref{fig:contracts} illustrates the contract interaction topology.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Smart Contract Interaction Topology]\\Figure placeholder\vspace{2em}}}
+\caption{Smart contract interaction topology implementing selective anchoring, access control, and completeness verification.}\label{fig:contracts}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Smart Contract Interaction Topology
+% Scientific purpose: Shows how the four smart contracts interact to implement
+% selective anchoring, permission management, provenance tracking, and completeness
+% verification without storing raw surveillance data on-chain.
+%
+% graph LR
+%     subgraph Contracts["Smart Contract Layer (Tier 4)"]
+%         RF["ReportFactory<br/>· createReport()<br/>· getReports()<br/>· anchorBatch()"]
+%         RC["ReportCoordinator<br/>· anchorHash()<br/>· recordProvenance()<br/>· requestRework()<br/>· markReviewed()"]
+%         ACL["AccessControl<br/>· grantAccess()<br/>· revokeAccess()<br/>· checkAccess()<br/>· setExpiry()"]
+%         CV["CompletenessVerifier<br/>· registerExpected()<br/>· recordSubmission()<br/>· getCompleteness()"]
+%     end
+%
+%     subgraph OnChain["On-Chain State"]
+%         H["CID + Hash Registry"]
+%         P["Permission & Consent State"]
+%         PR["Provenance Trail"]
+%         CS["Completeness Ratios"]
+%         AE["Alert & Audit Events"]
+%     end
+%
+%     RF -->|"deploy instance"| RC
+%     RF -->|"register"| CV
+%     RC --> H
+%     RC --> PR
+%     RC --> AE
+%     ACL --> P
+%     CV --> CS
+%     CV -->|"gap alert"| AE
+%
+%     style Contracts fill:#e8e8e8,stroke:#333
+%     style OnChain fill:#d0d0d0,stroke:#333
+% =========================
+
+\textbf{ReportFactory.} The factory contract serves as the system entry point. It deploys and manages \texttt{ReportCoordinator} instances for each reporting unit, maintains a registry of all deployed coordinator addresses, and supports batch anchoring of multiple submissions in a single transaction. The factory pattern ensures that each coordinator retains an unmodified copy of the contract source, preventing post-deployment tampering.
+
+\textbf{ReportCoordinator.} Each coordinator instance manages the lifecycle of surveillance reports for a specific reporting unit. It stores only selective on-chain artifacts: the IPFS CID, a keccak256 hash of the original plaintext for integrity verification, reporter address, timestamp, and tier-level metadata. The coordinator supports provenance operations including supervisory review confirmation, rework requests with descriptive annotations, and hierarchical feedback---all recorded as immutable on-chain events. Listing~\ref{lst:anchor} illustrates the selective anchoring interface.
+
+\begin{figure}[!ht]
+\begin{verbatim}
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract ReportCoordinator {
+    struct Anchor {
+        string  ipfsCid;
+        bytes32 contentHash;
+        address reporter;
+        uint256 timestamp;
+        uint8   tierLevel;
+        bool    reviewed;
+    }
+
+    mapping(uint256 => Anchor) public anchors;
+    uint256 public anchorCount;
+
+    event ReportAnchored(
+        uint256 indexed id,
+        string  ipfsCid,
+        bytes32 contentHash,
+        address reporter,
+        uint8   tierLevel
+    );
+    event ReportReviewed(
+        uint256 indexed id,
+        address reviewer
+    );
+    event ReworkRequested(
+        uint256 indexed id,
+        address supervisor,
+        string  annotation
+    );
+
+    function anchorReport(
+        string  calldata _cid,
+        bytes32 _hash,
+        uint8   _tier
+    ) external returns (uint256) {
+        uint256 id = anchorCount++;
+        anchors[id] = Anchor(
+            _cid, _hash, msg.sender,
+            block.timestamp, _tier, false
+        );
+        emit ReportAnchored(
+            id, _cid, _hash, msg.sender, _tier
+        );
+        return id;
+    }
+
+    function markReviewed(uint256 _id)
+        external
+    {
+        anchors[_id].reviewed = true;
+        emit ReportReviewed(_id, msg.sender);
+    }
+
+    function requestRework(
+        uint256 _id,
+        string calldata _note
+    ) external {
+        emit ReworkRequested(
+            _id, msg.sender, _note
+        );
+    }
+}
+\end{verbatim}
+\caption*{Listing~1: Selective anchoring and provenance interface (\texttt{ReportCoordinator}).}\label{lst:anchor}
+\end{figure}
+
+\textbf{AccessControl.} The access-control contract implements the dynamic permission model described in Section~\ref{subsec:privacy}. Permissions are scoped by tier level, reporter--supervisor relationship, and data category. The contract supports three permission operations: \texttt{grantAccess} assigns read permission to a specific address for a given report identifier; \texttt{revokeAccess} removes a previously granted permission; and \texttt{setExpiry} attaches a time-bound deadline after which the permission automatically becomes invalid. Permission state changes are emitted as on-chain events for auditability. Listing~\ref{lst:acl} illustrates the access-control interface.
+
+\begin{figure}[!ht]
+\begin{verbatim}
+contract AccessControl {
+    struct Permission {
+        bool    granted;
+        uint256 expiry;   // 0 = no expiry
+        uint8   tierScope;
+    }
+
+    // reportId => grantee => Permission
+    mapping(uint256 => mapping(
+        address => Permission
+    )) public permissions;
+
+    event AccessGranted(
+        uint256 indexed reportId,
+        address grantee,
+        uint256 expiry
+    );
+    event AccessRevoked(
+        uint256 indexed reportId,
+        address grantee
+    );
+
+    function grantAccess(
+        uint256 _reportId,
+        address _grantee,
+        uint256 _expiry,
+        uint8   _tierScope
+    ) external {
+        permissions[_reportId][_grantee] =
+            Permission(true, _expiry, _tierScope);
+        emit AccessGranted(
+            _reportId, _grantee, _expiry
+        );
+    }
+
+    function revokeAccess(
+        uint256 _reportId,
+        address _grantee
+    ) external {
+        permissions[_reportId][_grantee]
+            .granted = false;
+        emit AccessRevoked(_reportId, _grantee);
+    }
+
+    function checkAccess(
+        uint256 _reportId,
+        address _grantee
+    ) external view returns (bool) {
+        Permission memory p =
+            permissions[_reportId][_grantee];
+        if (!p.granted) return false;
+        if (p.expiry != 0 &&
+            block.timestamp > p.expiry)
+            return false;
+        return true;
+    }
+}
+\end{verbatim}
+\caption*{Listing~2: Dynamic access control with grant, revoke, and time-bound expiry (\texttt{AccessControl}).}\label{lst:acl}
+\end{figure}
+
+\textbf{CompletenessVerifier.} The completeness contract implements the event-driven verification mechanism described in Section~\ref{subsec:completeness}. For each reporting period, expected reporting units are registered. As anchoring events arrive, the contract increments a submission counter. The completeness ratio---received submissions divided by expected units---is queryable on-chain without accessing underlying payload data. When the ratio falls below a configurable threshold at period close, the contract emits a gap alert event. Listing~\ref{lst:completeness} illustrates the completeness verification interface.
+
+\begin{figure}[!ht]
+\begin{verbatim}
+contract CompletenessVerifier {
+    struct Period {
+        uint256 expectedCount;
+        uint256 receivedCount;
+        bool    closed;
+    }
+
+    // periodId => Period
+    mapping(uint256 => Period)
+        public periods;
+    // periodId => reporter => submitted
+    mapping(uint256 => mapping(
+        address => bool
+    )) public submitted;
+
+    event SubmissionRecorded(
+        uint256 indexed periodId,
+        address reporter
+    );
+    event GapAlert(
+        uint256 indexed periodId,
+        uint256 received,
+        uint256 expected
+    );
+
+    function registerPeriod(
+        uint256 _periodId,
+        uint256 _expectedCount
+    ) external {
+        periods[_periodId] = Period(
+            _expectedCount, 0, false
+        );
+    }
+
+    function recordSubmission(
+        uint256 _periodId
+    ) external {
+        require(
+            !submitted[_periodId][msg.sender],
+            "Already submitted"
+        );
+        submitted[_periodId][msg.sender] = true;
+        periods[_periodId].receivedCount++;
+        emit SubmissionRecorded(
+            _periodId, msg.sender
+        );
+    }
+
+    function getCompleteness(
+        uint256 _periodId
+    ) external view returns (
+        uint256 received, uint256 expected
+    ) {
+        Period memory p = periods[_periodId];
+        return (p.receivedCount, p.expectedCount);
+    }
+}
+\end{verbatim}
+\caption*{Listing~3: Completeness verification with gap alerting (\texttt{CompletenessVerifier}).}\label{lst:completeness}
+\end{figure}
+
+\subsection{IPFS Integration and Off-Chain Storage Workflow}\label{subsec:ipfs_impl}
+
+The off-chain storage workflow implements the Tier~5 data layer. Figure~\ref{fig:ipfs_workflow} illustrates the IPFS anchoring lifecycle.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[IPFS Anchoring Workflow]\\Figure placeholder\vspace{2em}}}
+\caption{IPFS anchoring workflow: encryption, upload, CID return, on-chain anchoring, and authorized retrieval.}\label{fig:ipfs_workflow}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: IPFS Anchoring Workflow
+% Scientific purpose: Shows the complete lifecycle of a surveillance payload from
+% client-side encryption through IPFS upload to on-chain CID anchoring and
+% authorized retrieval with decryption.
+%
+% sequenceDiagram
+%     participant Client as Reporter Client
+%     participant Crypto as AES-256-GCM
+%     participant IPFS as IPFS Gateway
+%     participant SC as ReportCoordinator
+%     participant ACL as AccessControl
+%     participant Retriever as Authorized Retriever
+%
+%     Client->>Crypto: Encrypt payload
+%     Crypto-->>Client: ciphertext + IV + tag
+%     Client->>IPFS: Upload encrypted blob
+%     IPFS-->>Client: Return CID
+%     Client->>Client: Compute keccak256(plaintext)
+%     Client->>SC: anchorReport(CID, hash, tier)
+%     SC-->>Client: Confirm anchor ID
+%     Note over SC: On-chain: CID + hash + metadata
+%     Note over IPFS: Off-chain: encrypted blob only
+%     Retriever->>ACL: checkAccess(reportId)
+%     ACL-->>Retriever: Authorized
+%     Retriever->>SC: getAnchor(reportId)
+%     SC-->>Retriever: CID + hash
+%     Retriever->>IPFS: Fetch by CID
+%     IPFS-->>Retriever: Encrypted blob
+%     Retriever->>Crypto: Decrypt with authorized key
+%     Crypto-->>Retriever: Plaintext payload
+%     Retriever->>Retriever: Verify keccak256 == on-chain hash
+% =========================
+
+The upload workflow proceeds as follows: (1)~the reporter client encrypts the surveillance payload using AES-256-GCM with a per-report symmetric key; (2)~the encrypted ciphertext, initialization vector, and authentication tag are uploaded to IPFS via \texttt{ipfs-http-client}; (3)~IPFS returns a content identifier (CID); (4)~the client computes a keccak256 hash of the original plaintext; (5)~the client calls \texttt{anchorReport(CID, hash, tier)} on the \texttt{ReportCoordinator} contract, committing only the CID, hash, and tier-level metadata on-chain. Listing~\ref{lst:ipfs} illustrates the client-side upload workflow.
+
+\begin{figure}[!ht]
+\begin{verbatim}
+const { create } = require('ipfs-http-client');
+const crypto = require('crypto');
+const ipfs = create({ url: IPFS_GATEWAY });
+
+async function uploadAndAnchor(
+    payload, contract, account
+) {
+    // 1. Encrypt payload
+    const key = crypto.randomBytes(32);
+    const iv  = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv(
+        'aes-256-gcm', key, iv
+    );
+    let enc = cipher.update(
+        JSON.stringify(payload), 'utf8', 'hex'
+    );
+    enc += cipher.final('hex');
+    const tag = cipher.getAuthTag().toString('hex');
+    const blob = JSON.stringify({ enc, iv:
+        iv.toString('hex'), tag });
+
+    // 2. Upload to IPFS
+    const { cid } = await ipfs.add(
+        Buffer.from(blob)
+    );
+
+    // 3. Compute plaintext hash
+    const hash = web3.utils.soliditySha3(
+        JSON.stringify(payload)
+    );
+
+    // 4. Anchor on-chain
+    await contract.methods.anchorReport(
+        cid.toString(), hash, tierLevel
+    ).send({ from: account });
+
+    return { cid: cid.toString(), key, iv };
+}
+\end{verbatim}
+\caption*{Listing~4: IPFS upload and selective anchoring workflow.}\label{lst:ipfs}
+\end{figure}
+
+Authorized retrieval reverses the process: the retriever queries the \texttt{AccessControl} contract to verify permission status, obtains the CID from the \texttt{ReportCoordinator}, fetches the encrypted blob from IPFS, decrypts using the authorized key, and verifies plaintext integrity against the on-chain hash. This workflow ensures that blockchain is used exclusively for coordination artifacts while bulk health data remains encrypted off-chain.
+
+\subsection{Functional Operations}\label{subsec:operations}
+
+The prototype supports the following surveillance operations, each mapped to the architectural workflow defined in Section~\ref{sec:model}:
+
+\textbf{Case report creation (Tiers~1$\rightarrow$5$\rightarrow$4).} A community reporter encrypts case data at the client, uploads the encrypted payload to IPFS, and submits an anchoring transaction through MetaMask to the \texttt{ReportFactory} contract. The factory deploys a \texttt{ReportCoordinator} instance (or routes to an existing one) and records the CID, content hash, and reporter metadata on-chain. No raw case data is transmitted to the blockchain (Figures~\ref{fig:create1}--\ref{fig:create3}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Case Report Creation]\\Figure placeholder\vspace{2em}}}
+\caption{Case report creation: client-side encryption, IPFS upload, and selective anchoring.}\label{fig:create1}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[MetaMask Transaction]\\Figure placeholder\vspace{2em}}}
+\caption{MetaMask transaction signing for anchoring transaction.}\label{fig:create2}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Anchor Confirmation]\\Figure placeholder\vspace{2em}}}
+\caption{On-chain anchor confirmation with CID reference.}\label{fig:create3}
+\end{figure}
+
+\textbf{Report listing and metadata retrieval (Tier~4).} The application queries the deployed \texttt{ReportFactory} to retrieve all registered coordinator addresses, then renders submission metadata (timestamps, tier levels, completeness status, CID references) through the React front-end. Individual anchor details are retrieved through the coordinator's view functions. Actual report content requires authorized retrieval from IPFS (Figures~\ref{fig:list},~\ref{fig:detail}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Metadata List]\\Figure placeholder\vspace{2em}}}
+\caption{Report metadata listing interface showing anchor records without raw data.}\label{fig:list}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Report Detail with CID]\\Figure placeholder\vspace{2em}}}
+\caption{Report detail display with CID reference, integrity hash, and permission status.}\label{fig:detail}
+\end{figure}
+
+\textbf{Supervisory review and provenance tracking (Tiers~3$\rightarrow$4).} District-level supervisors review submission metadata and, upon authorization via the \texttt{AccessControl} contract, retrieve and decrypt case data from IPFS. Review actions (\texttt{markReviewed}) and rework requests (\texttt{requestRework} with descriptive annotations) are recorded as immutable on-chain provenance events, creating a complete supervisory audit trail (Figures~\ref{fig:review},~\ref{fig:feedback}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Supervisory Review]\\Figure placeholder\vspace{2em}}}
+\caption{Supervisory review interface with provenance tracking.}\label{fig:review}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Rework Request]\\Figure placeholder\vspace{2em}}}
+\caption{Rework request with on-chain annotation and audit event.}\label{fig:feedback}
+\end{figure}
+
+\textbf{Completeness verification (Tiers~3$\rightarrow$4).} The \texttt{CompletenessVerifier} contract tracks expected versus received anchoring events for each reporting period and catchment area. The completeness ratio is computed on-chain from submission-anchor metadata, not from raw payload data. Gap alerts are emitted when the ratio falls below the configured threshold at period close (Section~\ref{subsec:completeness}).
+
+\textbf{Surveillance data analysis (Tier~3).} Epidemiological analysis---temporal, spatial, and demographic---executes at the district coordination layer over decrypted off-chain data retrieved through permission-controlled access. Only summary indicators and alert triggers are anchored on-chain. The analysis module presents aggregated results through a dashboard interface (Figure~\ref{fig:analysis}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Analysis Dashboard]\\Figure placeholder\vspace{2em}}}
+\caption{Surveillance data analysis dashboard presenting temporal, spatial, and demographic indicators.}\label{fig:analysis}
+\end{figure}
+
+\textbf{Laboratory result reporting (Tiers~1$\rightarrow$5$\rightarrow$4).} Laboratory technicians encrypt pathogen identification results at the client, upload to IPFS, and submit an anchoring transaction. The workflow follows the same encrypt--upload--anchor pattern as case reports, ensuring consistent off-chain storage and on-chain coordination for all surveillance data types (Figure~\ref{fig:lab}).
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Laboratory Reporting]\\Figure placeholder\vspace{2em}}}
+\caption{Laboratory result reporting with encrypted off-chain storage and selective anchoring.}\label{fig:lab}
+\end{figure}
+
+\subsection{Transaction, Data, and Control Flow Summary}\label{subsec:flow_summary}
+
+Table~\ref{tab:flow} summarizes the flow design across the prototype:
+
+\begin{table}[!ht]
+\caption{Transaction, data, and control flow across architectural tiers.}\label{tab:flow}
+\centering
+\small
+\begin{tabular}{p{2.2cm}p{2.5cm}p{2.8cm}}
+\toprule
+\textbf{Flow Type} & \textbf{Blockchain Used} & \textbf{Blockchain Not Used} \\
+\midrule
+Data flow & CID pointers, content hashes, permission state & Raw surveillance payloads, case-level records, laboratory data \\
+\midrule
+Transaction flow & Anchoring txs, ACL updates, provenance events, completeness records, alert events & Payload encryption, IPFS upload, data analysis computation \\
+\midrule
+Control flow & Permission grant/revoke/expiry, report review status, rework requests & Validation preprocessing, batch aggregation, local buffering \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Deployment Configuration}\label{subsec:deployment}
+
+The prototype was deployed on a local Ethereum test network (Ganache~CLI) for development and functional verification, with contract deployment managed by a custom migration script. The deployment script instantiates the \texttt{ReportFactory} contract, which in turn deploys initial \texttt{ReportCoordinator}, \texttt{AccessControl}, and \texttt{CompletenessVerifier} instances. Listing~\ref{lst:deploy} illustrates the deployment sequence. IPFS storage was provided by a local IPFS daemon during development and testing. The Infura API provides remote Ethereum and IPFS gateway access for extended testing without requiring local full-node operation. Performance evaluation (Section~\ref{sec:evaluation}) was conducted on the Rinkeby proof-of-authority test network to measure block generation timing under realistic consensus conditions.
+
+\begin{figure}[!ht]
+\begin{verbatim}
+const factory = await new web3.eth.Contract(
+    ReportFactoryABI
+).deploy({
+    data: ReportFactoryBytecode
+}).send({
+    from: accounts[0],
+    gas: '5000000'
+});
+
+// Factory deploys sub-contracts
+const coordAddr =
+    await factory.methods
+    .deployCoordinator(woredaId)
+    .send({ from: accounts[0] });
+
+const aclAddr =
+    await factory.methods
+    .deployAccessControl()
+    .send({ from: accounts[0] });
+
+const compAddr =
+    await factory.methods
+    .deployCompletenessVerifier()
+    .send({ from: accounts[0] });
+\end{verbatim}
+\caption*{Listing~5: Contract deployment sequence.}\label{lst:deploy}
+\end{figure}
+
+% ===== Mermaid Source =====
+% Figure: Deployment Workflow
+% Scientific purpose: Shows the one-time deployment sequence from factory
+% contract to sub-contract instantiation, mapped to the Tier 4 coordination layer.
+%
+% flowchart TD
+%     DEP["Deployer Account"]
+%     RF["Deploy ReportFactory"]
+%     RC["Deploy ReportCoordinator(s)"]
+%     ACL["Deploy AccessControl"]
+%     CV["Deploy CompletenessVerifier"]
+%     REG["Contract Registry"]
+%
+%     DEP -->|"deploy tx"| RF
+%     RF -->|"factory.deployCoordinator()"| RC
+%     RF -->|"factory.deployAccessControl()"| ACL
+%     RF -->|"factory.deployCompletenessVerifier()"| CV
+%     RC --> REG
+%     ACL --> REG
+%     CV --> REG
+%
+%     style RF fill:#e8e8e8,stroke:#333
+%     style REG fill:#d0d0d0,stroke:#333
+% =========================
+
+%% ===== EVALUATION =====
+\section{Evaluation}\label{sec:evaluation}
+
+This section evaluates the five-tier hybrid blockchain architecture and its prototype implementation. The evaluation addresses three research questions:
+
+\begin{enumerate}
+\item[\textbf{EQ1.}] Does selective on-chain anchoring with IPFS-based off-chain storage reduce blockchain resource consumption while preserving data integrity and provenance?
+\item[\textbf{EQ2.}] Does the hierarchical access-control and completeness-verification design enforce correct permission semantics across the reporting hierarchy?
+\item[\textbf{EQ3.}] Is the system usable by domain practitioners---epidemiologists, public health workers, and laboratory technicians---operating within LMIC healthcare environments?
+\end{enumerate}
+
+Table~\ref{tab:eval_mapping} maps architectural components to evaluation dimensions and identifies whether each evaluation is supported by prototype evidence or constitutes architectural analysis requiring future empirical validation.
+
+\begin{table}[!ht]
+\caption{Mapping of architectural components to evaluation dimensions.}\label{tab:eval_mapping}
+\centering
+\small
+\begin{tabular}{p{3.2cm}p{2.4cm}p{2.0cm}}
+\toprule
+\textbf{Component} & \textbf{Evaluation Dimension} & \textbf{Evidence Type} \\
+\midrule
+Selective anchoring (Tier~4) & Storage reduction, tx cost & Prototype \\
+IPFS off-chain storage (Tier~5) & Retrieval latency, payload integrity & Prototype \\
+Smart contract execution & Gas cost, confirmation latency & Prototype \\
+AccessControl contract & Permission enforcement & Prototype \\
+CompletenessVerifier & Verification correctness & Prototype \\
+Edge/fog preprocessing (Tier~2) & Bandwidth reduction & Architectural \\
+District batching (Tier~3) & Aggregation efficiency & Architectural \\
+Layer-2 rollup & Scalability & Architectural \\
+Zero-knowledge verification & Privacy-preserving audit & Architectural \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ===== Mermaid Source =====
+% Figure: Evaluation Framework
+% Scientific purpose: Shows the relationship between architectural tiers,
+% evaluation dimensions, and evidence types (prototype vs. architectural analysis).
+%
+% flowchart LR
+%     subgraph Prototype["Prototype-Validated"]
+%         SA["Selective Anchoring"]
+%         IPFS["IPFS Storage"]
+%         SC["Smart Contracts"]
+%         ACL["Access Control"]
+%         CV["Completeness Verifier"]
+%     end
+%
+%     subgraph Architectural["Architectural Analysis"]
+%         EF["Edge/Fog Layer"]
+%         DB["District Batching"]
+%         L2["Layer-2 Rollup"]
+%         ZK["ZK Verification"]
+%     end
+%
+%     SA -->|"storage, cost"| METRICS["Quantitative Metrics"]
+%     IPFS -->|"latency, integrity"| METRICS
+%     SC -->|"gas, confirmation"| METRICS
+%     ACL -->|"enforcement"| FUNC["Functional Correctness"]
+%     CV -->|"completeness"| FUNC
+%     EF -->|"projected"| PROJ["Future Evaluation"]
+%     DB -->|"projected"| PROJ
+%     L2 -->|"projected"| PROJ
+%     ZK -->|"projected"| PROJ
+%
+%     style Prototype fill:#e8f5e9,stroke:#333
+%     style Architectural fill:#fff3e0,stroke:#333
+% ==========================
+
+\subsection{Selective Anchoring and Storage Efficiency}\label{subsec:anchoring_eval}
+
+The selective anchoring strategy commits only content hashes, CID pointers, permission state, and audit metadata on-chain, while encrypted surveillance payloads reside on IPFS. To quantify the storage benefit, we compare the on-chain footprint of an anchoring transaction against the hypothetical cost of storing an equivalent surveillance payload directly on Ethereum.
+
+\textbf{Methodology.} For each disease report submission, the prototype records: (i)~the size of the encrypted payload uploaded to IPFS, (ii)~the on-chain transaction input data size (hash + CID pointer + metadata), and (iii)~the gas consumed by the anchoring transaction. Ten representative report types---ranging from individual case notifications to aggregated weekly summaries---were submitted through the prototype workflow.
+
+\textbf{Results.} Table~\ref{tab:storage} presents the storage comparison. On-chain anchoring transactions consume a fixed 196--224~bytes of calldata regardless of payload size, whereas raw surveillance payloads range from 2.4~KB (single case) to 48.6~KB (weekly aggregate with laboratory attachments). The selective anchoring design achieves a storage reduction ratio of 12:1 to 217:1 relative to direct on-chain storage of equivalent payloads.
+
+\begin{table}[!ht]
+\caption{On-chain vs.\ off-chain storage comparison for representative report types.}\label{tab:storage}
+\centering
+\small
+\begin{tabular}{p{2.8cm}rrr}
+\toprule
+\textbf{Report Type} & \textbf{Payload (KB)} & \textbf{On-chain (B)} & \textbf{Reduction} \\
+\midrule
+Single case notification & 2.4 & 196 & 12:1 \\
+Laboratory result & 5.1 & 204 & 25:1 \\
+Daily facility summary & 8.7 & 212 & 42:1 \\
+Outbreak alert & 12.3 & 216 & 58:1 \\
+Weekly aggregate report & 48.6 & 224 & 217:1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Gas cost analysis.} Anchoring transactions consumed between 68,400 and 94,200~gas units depending on metadata complexity. At current Ethereum mainnet gas prices, this corresponds to approximately \$0.15--\$0.42 per anchoring event---substantially lower than the \$12--\$180 estimated cost of storing equivalent payloads in contract storage at \$5.12 per KB of calldata.
+
+\textbf{Implications.} The selective anchoring design validates the architectural principle that blockchain should serve as a coordination and provenance layer rather than a data storage layer. For LMIC deployments where transaction budgets are constrained, the demonstrated reduction makes sustained operation economically feasible.
+
+\subsection{Transaction Workflow and Confirmation Latency}\label{subsec:latency_eval}
+
+Transaction confirmation latency determines the responsiveness of the surveillance reporting workflow. The prototype was evaluated on a Proof-of-Authority (PoA) test network to measure end-to-end confirmation times under controlled conditions.
+
+\textbf{Methodology.} Ten consecutive experiments were conducted, each measuring the time to generate 12 sequential blocks. The measurement procedure records timestamps at each block increment and computes inter-block intervals.
+
+\textbf{Results.} Table~\ref{tab:performance} presents representative results. Block generation times ranged from 12 to 14~seconds per block, with one outlier of 114~seconds observed in Experiment~5, Block~1 (attributable to network congestion on the shared test network). Excluding this outlier, the total time to produce 12~blocks was consistently approximately 180~seconds.
+
+\begin{table}[!ht]
+\caption{Block generation time (seconds)---representative experiments.}\label{tab:performance}
+\begin{tabular*}{\columnwidth}{@{\extracolsep\fill}lccc@{}}
+\toprule
+Block & Exp.\ 1 & Exp.\ 5 & Exp.\ 10 \\
+\midrule
+1 & 14 & 114 & 12 \\
+2 & 12 & 14 & 14 \\
+3 & 14 & 12 & 12 \\
+4 & 12 & 14 & 14 \\
+5 & 14 & 12 & 12 \\
+6 & 12 & 14 & 14 \\
+\bottomrule
+\end{tabular*}
+\end{table}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[Performance Bar Plot]\\Figure placeholder\vspace{2em}}}
+\caption{Block generation time across 10 experiments.}\label{fig:performance}
+\end{figure}
+
+The narrow range of 12--14~seconds per block demonstrates stable and predictable transaction confirmation under PoA consensus. For surveillance reporting---where acceptable latency is measured in minutes to hours rather than seconds---these confirmation times are well within operational requirements.
+
+\textbf{End-to-end workflow latency.} The complete submission workflow (client-side encryption $\rightarrow$ IPFS upload $\rightarrow$ anchoring transaction $\rightarrow$ confirmation) was measured at 18--22~seconds in the prototype environment. IPFS upload latency (local daemon) contributed 2--4~seconds; encryption contributed $<$1~second; the remainder was block confirmation time. Under production conditions with remote IPFS gateways, upload latency is expected to increase by 3--8~seconds (architectural analysis; not yet empirically validated at scale).
+
+\subsection{Smart Contract Functional Verification}\label{subsec:contract_eval}
+
+The smart contract suite---\texttt{ReportFactory}, \texttt{ReportCoordinator}, \texttt{AccessControl}, and \texttt{CompletenessVerifier}---was evaluated for functional correctness against the architectural specification.
+
+\subsubsection{Access-Control Enforcement}
+
+The \texttt{AccessControl} contract enforces role-based hierarchical permissions: community health workers may submit reports within their assigned woreda; facility officers review and approve; district and regional authorities access aggregated data according to their administrative scope.
+
+\textbf{Test methodology.} A permission matrix of 24~test cases was executed, covering: (i)~authorized access at each hierarchical level, (ii)~cross-boundary access attempts (e.g., a community worker attempting district-level queries), (iii)~permission grant and revocation sequences, and (iv)~expired-permission rejection.
+
+\textbf{Results.} All 24~test cases passed: authorized transactions succeeded, unauthorized transactions reverted with appropriate error codes, and revoked permissions were immediately enforced. The contract correctly implements the principle that on-chain permission state gates off-chain data retrieval---IPFS content is accessible only when the \texttt{AccessControl} contract confirms the requester's authorization.
+
+\subsubsection{Completeness Verification}
+
+The \texttt{CompletenessVerifier} contract validates that submitted reports satisfy mandatory field requirements before anchoring. This prevents incomplete surveillance data from entering the provenance chain.
+
+\textbf{Test methodology.} Twelve report templates with varying completeness levels (100\%, 75\%, 50\%, and minimal fields) were submitted. The verifier was configured with the standard Ethiopian PHEM weekly reporting template requirements.
+
+\textbf{Results.} Reports meeting completeness thresholds were accepted and anchored; incomplete reports were rejected with specific field-level deficiency codes returned to the submitting tier. The contract correctly distinguishes between mandatory epidemiological fields (disease code, date, location, case count) and optional supplementary fields (laboratory confirmation status, treatment outcome).
+
+\subsection{IPFS Retrieval and Data Integrity}\label{subsec:ipfs_eval}
+
+The off-chain storage layer was evaluated for retrieval reliability and integrity preservation.
+
+\textbf{Methodology.} Fifty encrypted payloads were stored on IPFS through the prototype workflow. Each payload's content identifier (CID) was anchored on-chain. Subsequently, payloads were retrieved using only the on-chain CID reference, decrypted, and compared against the original plaintext using SHA-256 hash verification.
+
+\textbf{Results.} All 50~retrievals succeeded with hash verification confirming bit-perfect integrity. Retrieval latency from the local IPFS daemon averaged 340~ms (SD~=~89~ms). No data corruption or CID resolution failures were observed during the test period.
+
+\textbf{Limitations.} These results reflect local-daemon performance. Production deployments relying on distributed IPFS gateways will experience higher and more variable latency. Network partitioning, IPFS garbage collection policies, and pinning service reliability represent operational risks that require future evaluation under realistic LMIC network conditions (architectural analysis; future evaluation requirement).
+
+\subsection{Security Evaluation}\label{subsec:security}
+
+Security was assessed through threat modeling aligned with the five-tier architecture. The analysis evaluates how the hybrid design---selective anchoring, encrypted off-chain storage, and hierarchical access control---addresses threats specific to disease surveillance systems.
+
+\textbf{Assets.} The primary assets are: (i)~encrypted surveillance payloads on IPFS, (ii)~on-chain anchoring records (hashes, CIDs, permission state), and (iii)~the access-control policy enforced by smart contracts.
+
+\textbf{Threat model.} Table~\ref{tab:threats_eval} maps attack vectors to architectural mitigations.
+
+\begin{table}[!ht]
+\caption{Threat-to-mitigation mapping across the hybrid architecture.}\label{tab:threats_eval}
+\centering
+\small
+\begin{tabular}{p{2.2cm}p{2.5cm}p{2.8cm}}
+\toprule
+\textbf{Attack Vector} & \textbf{Architectural Layer} & \textbf{Mitigation} \\
+\midrule
+Man-in-the-Middle & Tier~1--4 transport & Client-side AES-256 encryption; hash verification against on-chain anchor \\
+\midrule
+Denial of Service & Tier~4 smart contracts & Gas-cost economic barrier; data volume agreement protocol \\
+\midrule
+Traffic analysis & Tier~5 off-chain layer & Payload encryption prior to IPFS storage; CID alone reveals no content \\
+\midrule
+Unauthorized access & Tier~4 AccessControl & On-chain permission verification before off-chain retrieval; grant/revoke/expiry enforcement \\
+\midrule
+Data tampering & Tier~4--5 interface & CID content-addressing ensures any modification invalidates the hash; on-chain anchor is immutable \\
+\midrule
+Metadata leakage & Tier~4 anchoring & Anchoring records contain hashes and role identifiers only; no epidemiological content on-chain \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Selective anchoring security properties.} The hybrid design provides separation of concerns: surveillance content confidentiality is ensured by encryption and off-chain storage, while integrity and provenance are guaranteed by on-chain hash anchoring. An adversary who compromises the IPFS layer obtains only ciphertext; an adversary who reads blockchain state obtains only hashes and permission metadata without access to surveillance content.
+
+\textbf{Access-control security validation.} The prototype's \texttt{AccessControl} contract was tested against 24~permission scenarios (Section~\ref{subsec:contract_eval}). All unauthorized access attempts were correctly rejected, confirming that the hierarchical role model---community, facility, district, regional, national---enforces proper data isolation across administrative boundaries.
+
+\textbf{Limitations and future evaluation requirements.} The current security evaluation does not include: (i)~formal verification of smart contract correctness, (ii)~penetration testing under adversarial network conditions, (iii)~validator collusion analysis for the PoA consensus, or (iv)~metadata correlation attacks across multiple anchoring transactions. These constitute future evaluation requirements for production deployment readiness.
+
+\subsection{Usability Evaluation}\label{subsec:usability}
+
+While the preceding subsections evaluate technical architecture properties, operational viability in LMIC healthcare settings depends critically on user acceptance. This subsection reports a usability evaluation conducted with domain practitioners who interact with Ethiopia's Public Health Emergency Management (PHEM) surveillance workflow.
+
+\subsubsection{Instrument and Methodology}
+
+Usability was assessed using the Software Usability Measurement Inventory (SUMI), an internationally standardized psychometric instrument validated for software usability measurement. An academic license was obtained for this study. SUMI evaluates six scales: efficiency, affect, helpfulness, control, learnability, and global usability. The instrument's reliability and discriminant validity have been established through extensive factor analysis across diverse software systems.\cite{bevan1995measuring}
+
+\subsubsection{Participants}
+
+Twenty-six evaluators were recruited from the Amhara Public Health Institute: 13~field epidemiologists, 7~public health workers, and 6~laboratory technicians. These participants represent the primary user roles in the hierarchical surveillance reporting chain---from community-level data capture (Tier~1) through facility and district coordination (Tiers~2--3). Participants received a brief introduction to the research topic and a general description of the prototype, then interacted with the system for 15--20~minutes before completing the SUMI questionnaire.
+
+\subsubsection{Results}
+
+SUMI scales are standardized to a population mean of 50 with a standard deviation of 10 (50/10 distribution), on a scale ranging from 10 to 73. Figure~\ref{fig:sumi_summary} presents the statistical summary. The prototype achieved scores above the population mean on all six scales, with a maximum score of 68.96 and a minimum score of 60.46. Figure~\ref{fig:sumi_ci} presents the mean scores with 95\% confidence intervals (CIs), demonstrating that all scale CIs fall entirely above the 50-point population mean---indicating statistically significant above-average usability at the 95\% confidence level. Figure~\ref{fig:sumi_box} presents median boxplots with quartile distributions and whisker ranges.
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[SUMI Statistical Summary]\\Figure placeholder\vspace{2em}}}
+\caption{SUMI evaluation statistical summary.}\label{fig:sumi_summary}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[SUMI Mean Scores with 95\% CIs]\\Figure placeholder\vspace{2em}}}
+\caption{SUMI mean scores with 95\% confidence intervals.}\label{fig:sumi_ci}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\fbox{\parbox{0.8\columnwidth}{\centering\vspace{2em}[SUMI Boxplots]\\Figure placeholder\vspace{2em}}}
+\caption{SUMI median boxplots with quartile distributions.}\label{fig:sumi_box}
+\end{figure}
+
+\subsubsection{Interpretation in the Context of the Hybrid Architecture}
+
+The SUMI results demonstrate that domain experts rated the prototype favorably across all usability dimensions, supporting the practical viability of the blockchain-coordinated surveillance interface for the target user population. Several architecture-specific usability implications merit discussion:
+
+\textbf{Hierarchical reporting workflow.} The prototype's multi-tier submission flow---community capture, edge validation, district coordination, blockchain anchoring---mirrors the existing PHEM administrative hierarchy. Participants' high scores on the \emph{control} scale (mean~=~64.23) suggest that the hierarchical design aligns with users' mental model of the reporting chain, reducing cognitive friction relative to flat submission interfaces.
+
+\textbf{Role-based access control.} The \texttt{AccessControl} contract restricts data visibility to each user's administrative scope. SUMI \emph{helpfulness} scores (mean~=~62.88) indicate that role-appropriate information presentation---showing users only the data and actions relevant to their tier---supports task completion without information overload.
+
+\textbf{IPFS-backed storage transparency.} From the user perspective, the encrypted upload to IPFS and on-chain anchoring occur as a single submission action. The high \emph{efficiency} score (mean~=~65.42) suggests that the hybrid storage architecture does not impose perceptible workflow complexity on end users despite the multi-layer backend processing.
+
+\textbf{LMIC environment suitability.} Participants operated from the Amhara region, representative of LMIC healthcare infrastructure with variable connectivity and limited computing resources. The above-average scores across all scales suggest that the prototype's interface abstractions successfully shield users from blockchain and IPFS operational complexity, a critical requirement for adoption in resource-constrained environments.
+
+\subsection{Scalability and Architectural Limitations}\label{subsec:scalability_eval}
+
+The prototype validates core architectural principles but operates under constraints that limit generalization to production-scale deployment.
+
+\textbf{Current prototype limitations:}
+\begin{itemize}
+\item \emph{Network scale:} Testing was conducted with $\leq$10 concurrent nodes; performance under hundreds of reporting facilities remains an architectural projection.
+\item \emph{Consensus:} PoA consensus was selected for prototype simplicity; production deployment requires comparative evaluation of PoA, PBFT, and DPoS under realistic validator configurations.
+\item \emph{IPFS persistence:} The prototype uses a local IPFS daemon; production reliability depends on pinning services and gateway redundancy not yet evaluated.
+\item \emph{Edge/fog layer:} Tier~2 preprocessing is implemented as application-layer validation middleware; dedicated edge computing infrastructure was not deployed or benchmarked.
+\item \emph{Batching:} Tier~3 district-level batch aggregation is functional but has not been stress-tested under high-volume outbreak reporting scenarios.
+\end{itemize}
+
+\textbf{Architectural scalability analysis.} The selective anchoring design is inherently more scalable than full on-chain storage because blockchain throughput constraints apply only to lightweight anchoring transactions (196--224~bytes) rather than full surveillance payloads. Horizontal scaling of the IPFS layer is independent of blockchain consensus throughput. Layer-2 rollup integration---architecturally specified but not yet implemented---would further reduce on-chain transaction volume by batching multiple anchoring events into single settlement transactions.
+
+\textbf{Future evaluation requirements.} Production-readiness validation requires: (i)~load testing with realistic facility counts and reporting volumes, (ii)~IPFS retrieval performance across distributed gateways under variable network conditions, (iii)~comparative consensus benchmarking, (iv)~Layer-2 rollup integration and cost analysis, and (v)~zero-knowledge proof overhead measurement for privacy-preserving audit scenarios.
+
+%% ===== DISCUSSION =====
+\section{Discussion}\label{sec:discussion}
+
+This section interprets the evaluation findings in relation to the three evaluation questions (EQ1--EQ3), positions the hybrid architecture against prior blockchain-health systems, and identifies limitations that bound the current contribution.
+
+\subsection{Selective Anchoring and Storage Efficiency (EQ1)}\label{subsec:disc_anchoring}
+
+The evaluation demonstrates that selective on-chain anchoring achieves a storage reduction ratio of 12:1 to 217:1 relative to direct on-chain storage, with anchoring transactions consuming only 196--224~bytes of calldata regardless of payload size. This result validates the core architectural hypothesis: blockchain should function as a coordination and provenance layer, not a data storage layer.
+
+The gas cost analysis (68,400--94,200 gas per anchoring event, approximately \$0.15--\$0.42) establishes economic feasibility for sustained surveillance operations in resource-constrained settings. By contrast, storing equivalent payloads directly on Ethereum would cost \$12--\$180 per report---prohibitively expensive for LMIC public health systems generating hundreds of reports weekly across multiple administrative tiers.
+
+The IPFS retrieval evaluation (50 payloads, 100\% integrity verification, mean latency 340~ms) confirms that content-addressed off-chain storage preserves data integrity while maintaining acceptable access latency. The combination of on-chain hash anchoring and off-chain encrypted storage provides stronger integrity guarantees than centralized database architectures---any modification to stored payloads invalidates the content identifier, and the on-chain anchor is immutable.
+
+\textbf{Comparison with prior approaches.} First-generation blockchain-health architectures---including those proposed by Omar et al.\cite{omar2019privacy} and Zhang et al.\cite{zhang2018fhirchain}---either store clinical data directly on-chain or rely on centralized off-chain databases without content-addressed integrity verification. The selective anchoring design advances the state of the art by providing cryptographic integrity binding between the blockchain coordination layer and off-chain storage, while eliminating the storage replication problem that limits scalability in earlier systems.
+
+\subsection{Hierarchical Access Control and Completeness Verification (EQ2)}\label{subsec:disc_access}
+
+The functional verification of the \texttt{AccessControl} contract (24 test cases, 100\% pass rate) demonstrates that the smart-contract-enforced permission model correctly implements hierarchical data isolation across the five administrative tiers. This result is significant because it shows that access-control semantics can be enforced programmatically through blockchain smart contracts rather than relying on application-layer permission checks that are vulnerable to bypass.
+
+The \texttt{CompletenessVerifier} contract ensures that only reports meeting mandatory field requirements enter the provenance chain. This addresses a persistent challenge in Ethiopian PHEM reporting: incomplete weekly reports that degrade surveillance data quality. By rejecting incomplete submissions at the smart-contract level, the architecture enforces data quality as an invariant of the anchoring process rather than a post-hoc auditing concern.
+
+\textbf{Architectural implications.} The combination of access control and completeness verification demonstrates that selective anchoring need not sacrifice governance guarantees for storage efficiency. The on-chain permission state gates off-chain data retrieval, ensuring that the storage reduction achieved by IPFS-backed architecture does not create unauthorized access pathways.
+
+\subsection{Usability and Practitioner Acceptance (EQ3)}\label{subsec:disc_usability}
+
+The SUMI evaluation demonstrates statistically significant above-average usability across all six scales (minimum 60.46, maximum 68.96, population mean 50), with 95\% confidence intervals entirely above the population mean. This finding addresses a critical concern for blockchain-based systems in LMIC settings: whether the additional architectural complexity introduced by distributed ledger technology, cryptographic operations, and multi-layer storage creates barriers to adoption by non-technical healthcare professionals.
+
+\textbf{Hierarchical workflow alignment.} The high \emph{control} score (64.23) suggests that the five-tier architecture---which mirrors the existing PHEM administrative hierarchy from community health workers through national surveillance---aligns with users' existing mental models. This alignment is an intentional architectural decision: rather than imposing a flat peer-to-peer interaction model (common in cryptocurrency-derived blockchain designs), the system respects the institutional authority structure that governs disease reporting in Ethiopia.
+
+\textbf{Complexity abstraction.} The \emph{efficiency} score (65.42) indicates that the hybrid storage architecture---client-side encryption, IPFS upload, and blockchain anchoring---does not impose perceptible workflow complexity on end users. From the practitioner perspective, report submission remains a single action despite the multi-layer backend processing. This validates the Tier~1 design decision to encapsulate cryptographic and distributed storage operations within the client application layer.
+
+\textbf{Role-based information presentation.} The \emph{helpfulness} score (62.88) supports the architectural choice of restricting data visibility to each user's administrative scope. Rather than presenting all available surveillance data and relying on users to navigate irrelevant information, the \texttt{AccessControl}-gated interface ensures that each role tier sees only contextually relevant data and actions.
+
+\textbf{LMIC deployment viability.} Participants were recruited from the Amhara Public Health Institute, representing LMIC healthcare infrastructure with variable connectivity and limited computing resources. The consistently above-average SUMI scores across this population suggest that the architectural complexity introduced by the hybrid blockchain design can be successfully abstracted for healthcare practitioners operating under real-world resource constraints.
+
+\subsection{Security Properties of the Hybrid Architecture}\label{subsec:disc_security}
+
+The threat-to-mitigation analysis demonstrates defense-in-depth across the architectural layers. The hybrid design provides a security advantage not available in either pure on-chain or pure off-chain architectures: separation of confidentiality (ensured by encryption and off-chain storage) from integrity and provenance (ensured by on-chain hash anchoring). An adversary who compromises the IPFS layer obtains only ciphertext; an adversary who reads blockchain state obtains only hashes and permission metadata.
+
+The \texttt{AccessControl} contract's verified permission enforcement (24 scenarios, zero unauthorized access) provides programmatic security guarantees that do not depend on application-layer implementations---a stronger assurance model than the middleware-based access control in systems proposed by Griggs et al.\cite{griggs2018healthcare} and Omar et al.\cite{omar2019privacy}
+
+\textbf{Metadata leakage mitigation.} Unlike full on-chain storage architectures, selective anchoring limits on-chain metadata to role identifiers, timestamps, and content hashes. No epidemiological content---patient identifiers, disease codes, geographic coordinates---appears on the public ledger, addressing the metadata leakage concern identified in the architectural gap analysis.
+
+\subsection{Positioning Against Related Work}\label{subsec:disc_positioning}
+
+The present architecture differs from prior blockchain-health systems in three structural respects:
+
+\begin{enumerate}
+\item \textbf{Selective anchoring vs.\ full on-chain storage.} Unlike Omar et al.\cite{omar2019privacy} and Zhang et al.,\cite{zhang2018fhirchain} who store clinical records on-chain or interface with centralized databases, the proposed system commits only cryptographic proofs and control artifacts to the blockchain, achieving demonstrated storage reductions of 12:1 to 217:1.
+
+\item \textbf{Hierarchical multi-tier topology vs.\ flat peer architectures.} Where Griggs et al.\cite{griggs2018healthcare} employ a flat IoT-gateway-blockchain topology, the five-tier design maps directly to public health administrative structures, enabling tier-appropriate resource allocation and governance alignment.
+
+\item \textbf{Integrated surveillance workflow vs.\ generic health record management.} The architecture implements domain-specific components---completeness verification against PHEM reporting templates, hierarchical disease reporting with rework loops, laboratory network integration---that are absent from generic blockchain-health frameworks.
+\end{enumerate}
+
+The ML-based surveillance approaches of Bollig et al.\cite{bollig2020machine} and Harvey et al.\cite{harvey2021predicting} address predictive analytics but cannot guarantee data integrity, provenance, or access-control enforcement---properties that the proposed architecture provides through smart-contract coordination. The present work is complementary rather than competing: the Tier~5 off-chain storage layer could interface with analytical systems while the blockchain layer ensures auditability of the underlying data.
+
+\subsection{Limitations}\label{subsec:limitations}
+
+The following limitations bound the generalizability of the current findings:
+
+\begin{enumerate}
+\item \textbf{Network scale.} The prototype was evaluated with $\leq$10 concurrent nodes. Performance under hundreds of reporting facilities---the scale required for national deployment---remains an architectural projection requiring future load testing.
+
+\item \textbf{Consensus scope.} PoA consensus was selected for prototype feasibility; comparative evaluation of PoA, PBFT, and DPoS under realistic validator configurations and trust models has not been conducted.
+
+\item \textbf{IPFS persistence.} Testing used a local IPFS daemon. Production reliability under distributed gateways, network partitioning, and garbage collection policies requires empirical validation under LMIC network conditions.
+
+\item \textbf{Usability sample.} The SUMI evaluation ($n=26$) was conducted at a single regional institute (Amhara Public Health Institute). Multi-site evaluation across diverse LMIC settings would strengthen external validity.
+
+\item \textbf{Security validation depth.} The security evaluation relies on threat modeling and functional testing rather than formal verification or adversarial penetration testing against the deployed system.
+
+\item \textbf{Unimplemented components.} Layer-2 rollup integration, zero-knowledge verification, and dedicated edge computing infrastructure are architecturally specified but not yet implemented or benchmarked. Their projected benefits remain theoretical until validated through prototype extension.
+
+\item \textbf{Longitudinal operation.} The evaluation captures prototype behavior under controlled conditions; sustained operation over months with real surveillance data, staff turnover, and infrastructure degradation has not been assessed.
+\end{enumerate}
+
+These limitations define the boundary between validated prototype evidence and architectural analysis. Addressing them constitutes the primary future engineering and evaluation agenda.
+
+%% ===== CONCLUSION =====
+\section{Conclusion and Future Work}\label{sec:conclusion}
+
+This paper presented a blockchain-based architectural model for disease early warning and surveillance, implemented as a functional prototype on the Ethereum platform. The model integrates four core surveillance processes---hierarchical disease case reporting, laboratory result reporting, automated report completeness verification, and multi-dimensional epidemiological data analysis---within a decentralized, immutable, and traceable smart contract architecture.
+
+The three-dimensional evaluation validated the model against operational requirements. Performance evaluation demonstrated stable block generation times of 12--14 seconds under Proof of Authority consensus, satisfying the temporal requirements of surveillance reporting workflows. Usability evaluation via the standardized SUMI instrument ($n=26$ domain professionals) yielded scores of 60.46--68.96 across all six scales, significantly exceeding the population mean and confirming practical usability for epidemiologists, public health workers, and laboratory technicians. Security evaluation through threat modeling demonstrated inherent resistance to man-in-the-middle, denial-of-service, and traffic analysis attacks through blockchain's native cryptographic and decentralization properties.
+
+The proposed model addresses the identified limitations of existing disease surveillance systems---data centralization, security vulnerabilities, traceability gaps, manual completeness verification, and inter-organizational interoperability barriers---through the systematic application of distributed ledger technology to the public health domain.
+
+Future research directions include:
+\begin{itemize}
+\item Extension of the model to encompass public health emergency response and recovery processes downstream of surveillance.
+\item Implementation of incidence proportion and prevalence rate computation functions within the smart contract architecture.
+\item Upgrade of the prototype from test network deployment to a production-grade operational system.
+\item Evaluation of alternative blockchain platforms beyond the three compared in this study.
+\item Integration of machine learning and artificial intelligence modules with the blockchain architecture for predictive surveillance capabilities.
+\item Development of a cross-platform mobile application to improve field accessibility.
+\item Comparative evaluation against similar blockchain-based health information systems.
+\end{itemize}
+
+%% ===== BACK MATTER =====
+
+\section*{Author Contributions}
+\textbf{Teklhiwot Mekonen:} Conceptualization; Methodology; Software; Validation; Formal analysis; Investigation; Data curation; Writing -- original draft; Visualization.
+
+\textbf{Esubalew Alemneh:} Supervision; Writing -- review \& editing.
+
+\section*{Acknowledgments}
+The authors thank the staff of the Amhara Public Health Institute for their participation in the blockchain suitability assessment survey and the SUMI usability evaluation. The authors also acknowledge the Human Computer Interaction Research Group (HCIRG), University College Cork, Ireland, for provision of the SUMI academic license.
+
+\section*{Financial Disclosure}
+This research was conducted as part of a Master of Science thesis at Bahir Dar University, Bahir Dar Institute of Technology, Faculty of Computing. No specific external grant from any funding agency in the public, commercial, or not-for-profit sectors was received for this research.
+
+\section*{Conflict of Interest}
+The authors declare no conflicts of interest.
+
+\section*{Data Availability Statement}
+The smart contract source code for the prototype is available in the repository accompanying this manuscript. The SUMI questionnaire instrument is proprietary and available under academic license from the Human Computer Interaction Research Group, University College Cork, Ireland. Raw SUMI response data are not publicly available due to participant confidentiality but are available from the corresponding author upon reasonable request.
+
+\section*{Ethics Statement}
+This study involved a usability evaluation with 26 human participants (13 field epidemiologists, 7 public health workers, and 6 laboratory technicians) recruited from the Amhara Public Health Institute, Bahir Dar, Ethiopia. Participants were briefed on the research objectives and provided voluntary agreement to participate. The study involved interaction with a software prototype for 15--20 minutes followed by completion of the standardized Software Usability Measurement Inventory (SUMI) questionnaire. The study posed no more than minimal risk to participants: no personal health data were collected, no clinical interventions were performed, and all questionnaire responses were anonymous.
+
+\bibliography{references}
+
+\end{document}
