@@ -1,4 +1,4 @@
-\documentclass[AMA,LATO1COL]{WisijeyNJDv5}
+\documentclass[AMA,LATO1COL]{WileyNJDv5}
 
 % ===== Packages =====
 \usepackage{amsmath,amssymb}
@@ -223,21 +223,31 @@ Limitations include: the prototype validates feasibility rather than production-
 % ===================================================================
 \section{Conclusion}\label{sec:conclusion}
 
-This paper presented a five-tier hybrid blockchain architecture---spanning community, edge/fog, district, blockchain, and off-chain layers---purpose-built for disease surveillance in low-and-middle-income countries. The architecture makes seven principal contributions to the blockchain-enabled health informatics literature:
+Blockchain-based disease surveillance in LMICs has been constrained by three interrelated design deficiencies: monolithic on-chain storage that collapses under reporting volume, privacy models that conflate immutability with confidentiality, and consensus mechanisms deployed without governance frameworks reflective of public health hierarchies. This paper addressed all three through a five-tier hybrid architecture---community, edge/fog, district, blockchain, and off-chain---that decomposes surveillance workflows according to separation-of-concerns principles matched to LMIC infrastructure realities.
+
+The architecture advances the state of the art through seven contributions:
 
 \begin{enumerate}
-    \item \textbf{Hybrid on-chain/off-chain storage} eliminates the scalability ceiling of full on-chain designs by relegating encrypted surveillance records to IPFS while anchoring only content hashes, permissions, alerts, and audit trails on the permissioned ledger.
-    \item \textbf{Zero-Knowledge Proof integration} enables privacy-preserving selective disclosure, allowing public health authorities to verify outbreak thresholds and reporting completeness without accessing individual patient records.
-    \item \textbf{Tiered validator governance} aligns consensus authority with existing health administrative hierarchies through stake-weighted nomination, rotation schedules, and accountability mechanisms.
-    \item \textbf{Lightweight consensus optimization} adapts Proof-of-Authority for bandwidth- and compute-constrained LMIC nodes, maintaining transaction finality within surveillance reporting cadences.
-    \item \textbf{Edge/fog computing integration} localizes preprocessing, anomaly detection, and encryption at health facilities, reducing backbone bandwidth dependence and enabling near-real-time community-level alerting.
-    \item \textbf{Tokenized transaction economics} establish self-sustaining incentive structures for reporting compliance, validator participation, and data quality assurance independent of external funding cycles.
-    \item \textbf{Demonstrated architectural scalability} through hierarchical tier separation that supports horizontal scaling at each level without imposing resource burdens on lower tiers.
+    \item \textbf{Hybrid on-chain/off-chain storage.} Encrypted surveillance records reside on IPFS; only content hashes, access permissions, threshold-triggered alerts, and audit trails are anchored on the permissioned ledger, eliminating the storage scalability ceiling inherent in full on-chain designs~\cite{Maher2024,Nandanwar2025}.
+
+    \item \textbf{Zero-Knowledge Proof--based selective disclosure.} ZKPs enable public health authorities to verify outbreak thresholds, reporting completeness, and aggregate statistics without exposing individual patient records, resolving the tension between epidemiological visibility and data protection mandates~\cite{Sun2021,Goel2025}.
+
+    \item \textbf{Tiered validator governance.} Consensus authority is distributed across health system administrative levels through stake-weighted nomination, scheduled rotation, and slashing conditions, mapping blockchain governance onto existing institutional hierarchies rather than imposing exogenous trust structures.
+
+    \item \textbf{Lightweight Proof-of-Authority consensus.} The PoA variant minimizes computational and bandwidth overhead for resource-constrained validator nodes while preserving deterministic finality compatible with hourly-to-daily surveillance reporting cadences.
+
+    \item \textbf{Edge/fog computing integration.} Preprocessing, anomaly detection, and encryption are localized at health facilities, reducing backbone bandwidth dependence and enabling near-real-time community-level alerting even under intermittent connectivity~\cite{Akter2025,Saha2025}.
+
+    \item \textbf{Tokenized transaction economics.} A utility token model aligns individual incentives (reporting rewards, staking returns) with system-level data quality objectives, creating self-sustaining participation dynamics independent of external funding cycles.
+
+    \item \textbf{Hierarchical architectural scalability.} Tier separation supports horizontal scaling at each level---additional community nodes, edge processors, or district validators---without imposing incremental resource burdens on lower tiers.
 \end{enumerate}
 
-Prototype evaluation confirmed operational feasibility: stable block generation (12--14\,s per 12 blocks), above-average usability acceptance (SUMI scores 60.46--68.96 against a 73-point ceiling), and resilience against defined threat vectors. These results validate the architecture as a reproducible blueprint for blockchain-enabled surveillance under real-world LMIC constraints.
+Empirical evaluation confirmed operational feasibility across three dimensions: performance benchmarking yielded stable block generation times of 12--14\,s per 12 blocks; SUMI-based usability assessment produced scores of 60.46--68.96 (against a 73-point ceiling), exceeding the SUMI global mean across all five evaluation scales; and threat-model analysis demonstrated architectural resilience against data tampering, unauthorized access, Sybil attacks, metadata inference, and denial-of-service vectors. Collectively, these results validate the five-tier design as a reproducible architectural blueprint for blockchain-enabled surveillance deployable under real-world LMIC constraints.
 
-Future work targets three directions. First, cross-border interoperability protocols enabling federated surveillance across national blockchain instances through standardized alert propagation interfaces. Second, AI-augmented analytics integrating machine learning models at the edge/fog tier for predictive outbreak detection leveraging temporal and spatial reporting patterns. Third, longitudinal deployment studies within Ethiopian public health infrastructure to quantify sustained adoption, token economics viability, and governance model effectiveness under operational conditions.
+Several limitations bound the current findings. The prototype demonstrates feasibility rather than production-scale throughput; ZKP-based disclosure remains at the simulation level pending full cryptographic integration; and the usability evaluation reflects expert assessment rather than longitudinal end-user adoption data.
+
+Future work proceeds along three convergent directions. \emph{Cross-border interoperability}: federated surveillance protocols enabling alert propagation across national blockchain instances through standardized data exchange interfaces and HL7 FHIR--aligned smart contracts. \emph{AI-augmented edge analytics}: integration of lightweight machine learning models at the fog tier for predictive outbreak detection exploiting temporal, spatial, and syndromic reporting patterns. \emph{Longitudinal field deployment}: sustained pilot studies within Ethiopian public health infrastructure to quantify adoption trajectories, token economics viability, governance model resilience, and end-user acceptance under operational conditions.
 
 % ===================================================================
 % BACK MATTER
