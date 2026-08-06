@@ -14,4 +14,4 @@
 
 ## Remaining Sections
 
-- [ ] Back Matter (Author Contributions, Acknowledgments, Funding, Conflict of Interest, Data Availability, Ethics Statement)
+- [x] Back Matter (Author Contributions, Acknowledgments, Funding, Conflict of Interest, Data Availability, Ethics Statement)
